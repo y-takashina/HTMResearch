@@ -1,0 +1,6 @@
+[submodule "MatrixVisualizer"]
+	path = MatrixVisualizer
+	url = https://github.com/y-takashina/MatrixVisualizer.git
+[submodule "NabViz"]
+	path = NabViz
+	url = https://github.com/y-takashina/NabViz.git
