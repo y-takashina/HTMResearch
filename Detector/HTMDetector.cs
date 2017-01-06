@@ -6,7 +6,11 @@ using System.Threading.Tasks;
 
 namespace Detector
 {
-    class HTMDetector
+    public class HTMDetector
     {
+        public int Test()
+        {
+            return 1;
+        }
     }
 }
