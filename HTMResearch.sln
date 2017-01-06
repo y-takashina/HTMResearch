@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HTMResearch", "HTMResearch\HTMResearch.csproj", "{79D7265A-AC25-4904-BB84-DBC7DCE0DEBF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MatrixVisualizer", "MatrixVisualizer\MatrixVisualizer.csproj", "{31636F5F-347B-4DDC-8309-CCC4CAD068E0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NabViz", "NabViz\NabViz.csproj", "{0B19557F-EA58-4486-A98E-396E5F1C7965}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,10 +13,14 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{79D7265A-AC25-4904-BB84-DBC7DCE0DEBF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{79D7265A-AC25-4904-BB84-DBC7DCE0DEBF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{79D7265A-AC25-4904-BB84-DBC7DCE0DEBF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{79D7265A-AC25-4904-BB84-DBC7DCE0DEBF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{31636F5F-347B-4DDC-8309-CCC4CAD068E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31636F5F-347B-4DDC-8309-CCC4CAD068E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31636F5F-347B-4DDC-8309-CCC4CAD068E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31636F5F-347B-4DDC-8309-CCC4CAD068E0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0B19557F-EA58-4486-A98E-396E5F1C7965}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0B19557F-EA58-4486-A98E-396E5F1C7965}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0B19557F-EA58-4486-A98E-396E5F1C7965}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0B19557F-EA58-4486-A98E-396E5F1C7965}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
