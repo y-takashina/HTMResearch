@@ -1,12 +1,7 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Detector;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Detector;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Detector.Tests
+namespace DetectorTests
 {
     [TestClass()]
     public class HTMDetectorTests
