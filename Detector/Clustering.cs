@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Detector
 {
@@ -44,6 +46,34 @@ namespace Detector
             var left = DistanceFromClusterToCluster(((Couple) from).Left, to, metrics);
             var right = DistanceFromClusterToCluster(((Couple) from).Right, to, metrics);
             return left < right ? left : right;
+        }
+
+        public static Cluster SingleLinkage(int[] data, Func<int, int, double> metrics)
+        {
+            var clusters = data.Distinct().Select(value => (Cluster) new Single(value)).ToList();
+            while (clusters.Count != 1)
+            {
+                var min = double.MaxValue;
+                var c1 = clusters.First();
+                var c2 = clusters.Last();
+                for (var i = 0; i < clusters.Count; i++)
+                {
+                    for (var j = i + 1; j < clusters.Count; j++)
+                    {
+                        var d = DistanceFromClusterToCluster(clusters[i], clusters[j], metrics);
+                        if (d < min)
+                        {
+                            min = d;
+                            c1 = clusters[i];
+                            c2 = clusters[j];
+                        }
+                    }
+                }
+                clusters.Add(new Couple(c1, c2));
+                clusters.Remove(c1);
+                clusters.Remove(c2);
+            }
+            return clusters.First();
         }
     }
 }
