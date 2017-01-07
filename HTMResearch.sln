@@ -11,6 +11,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Detector", "Detector\Detect
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DetectorTests", "DetectorTests\DetectorTests.csproj", "{14947FFC-A73F-4269-A8A0-F0F86F85647D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PipExtensions", "PipExtensions\PipExtensions.csproj", "{7728F4CF-46AF-437C-802A-62EDBF7C5154}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PipExtensionsTests", "PipExtensions\PipExtensionsTests\PipExtensionsTests.csproj", "{EA65FD43-3DF9-4888-AA2B-5C40D0B1E733}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +37,14 @@ Global
 		{14947FFC-A73F-4269-A8A0-F0F86F85647D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{14947FFC-A73F-4269-A8A0-F0F86F85647D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{14947FFC-A73F-4269-A8A0-F0F86F85647D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7728F4CF-46AF-437C-802A-62EDBF7C5154}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7728F4CF-46AF-437C-802A-62EDBF7C5154}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7728F4CF-46AF-437C-802A-62EDBF7C5154}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7728F4CF-46AF-437C-802A-62EDBF7C5154}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EA65FD43-3DF9-4888-AA2B-5C40D0B1E733}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EA65FD43-3DF9-4888-AA2B-5C40D0B1E733}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EA65FD43-3DF9-4888-AA2B-5C40D0B1E733}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EA65FD43-3DF9-4888-AA2B-5C40D0B1E733}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
