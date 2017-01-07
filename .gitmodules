@@ -4,3 +4,6 @@
 [submodule "NabViz"]
 	path = NabViz
 	url = https://github.com/y-takashina/NabViz.git
+[submodule "PipExtensions"]
+	path = PipExtensions
+	url = https://github.com/y-takashina/PipExtensions.git
