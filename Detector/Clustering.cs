@@ -1,11 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Detector
 {
     public abstract class Cluster
     {
+        public void Print(string indent = "")
+        {
+            if (GetType() == typeof(Single)) Console.WriteLine(indent + "[ " + ((Single) this).Value + " ]");
+            else
+            {
+                var c = (Couple) this;
+                c.Left.Print(indent + "|-");
+                c.Right.Print(Regex.Replace(indent, @"\-|\+", " ") + "|-");
+            }
+        }
     }
 
     public class Single : Cluster
@@ -42,7 +53,7 @@ namespace Detector
 
         public static double DistanceFromClusterToCluster(Cluster from, Cluster to, Func<int, int, double> metrics)
         {
-            if (from.GetType() == typeof(Single)) DistanceFromSingleToCluster((Single) from, to, metrics);
+            if (from.GetType() == typeof(Single)) return DistanceFromSingleToCluster((Single) from, to, metrics);
             var left = DistanceFromClusterToCluster(((Couple) from).Left, to, metrics);
             var right = DistanceFromClusterToCluster(((Couple) from).Right, to, metrics);
             return left < right ? left : right;
