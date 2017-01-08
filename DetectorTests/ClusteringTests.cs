@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Detector.Clustering;
 
 namespace Detector.Tests
 {
@@ -14,11 +15,20 @@ namespace Detector.Tests
         [TestMethod()]
         public void DistanceFromSingleToClusterTest()
         {
+            var single = Cluster(1);
+            var cluster = Cluster(Cluster(Cluster(60), Cluster(Cluster(68), Cluster(31))), Cluster(Cluster(99), Cluster(19)));
+            var d = DistanceFromSingleToCluster(single, cluster, (x, y) => Math.Abs(x - y));
+            Assert.AreEqual(d, 18);
         }
 
         [TestMethod()]
         public void DistanceFromClusterToClusterTest()
         {
+            var cluster = Cluster(Cluster(Cluster(60), Cluster(Cluster(68), Cluster(31))), Cluster(Cluster(99), Cluster(19)));
+            var largeCluster = Cluster(Cluster(35), Cluster(Cluster(Cluster(Cluster(77), Cluster(Cluster(34), Cluster(22))), Cluster(Cluster(Cluster(69),
+                Cluster(Cluster(69), Cluster(33))), Cluster(Cluster(95), Cluster(22)))), Cluster(Cluster(Cluster(8), Cluster(38)), Cluster(72))));
+            var d = DistanceFromClusterToCluster(largeCluster, cluster, (x, y) => Math.Abs(x - y));
+            Assert.AreEqual(d, 1);
         }
 
         [TestMethod()]
