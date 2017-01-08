@@ -43,6 +43,16 @@ namespace Detector
 
     public static class Clustering
     {
+        public static Single Cluster(int value)
+        {
+            return new Single(value);
+        }
+
+        public static Couple Cluster(Cluster left, Cluster right)
+        {
+            return new Couple(left, right);
+        }
+
         public static double DistanceFromSingleToCluster(Single from, Cluster to, Func<int, int, double> metrics)
         {
             if (to.GetType() == typeof(Single)) return metrics(from.Value, ((Single) to).Value);
