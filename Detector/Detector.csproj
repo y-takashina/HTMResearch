@@ -32,6 +32,8 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -48,6 +50,14 @@
     <Compile Include="Sampling.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\MatrixVisualizer\MatrixVisualizer.csproj">
+      <Project>{31636f5f-347b-4ddc-8309-ccc4cad068e0}</Project>
+      <Name>MatrixVisualizer</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\NabViz\NabViz.csproj">
+      <Project>{0b19557f-ea58-4486-a98e-396e5f1c7965}</Project>
+      <Name>NabViz</Name>
+    </ProjectReference>
     <ProjectReference Include="..\PipExtensions\PipExtensions.csproj">
       <Project>{7728F4CF-46AF-437C-802A-62EDBF7C5154}</Project>
       <Name>PipExtensions</Name>
