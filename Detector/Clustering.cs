@@ -14,7 +14,7 @@ namespace Detector
             {
                 var c = (Couple) this;
                 c.Left.Print(indent + "|-");
-                c.Right.Print(Regex.Replace(indent, @"\-|\+", " ") + "|-");
+                c.Right.Print(Regex.Replace(indent, @"\-|\+", " ") + "+-");
             }
         }
     }
