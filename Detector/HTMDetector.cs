@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static Detector.Extensions;
+using MatrixVisualizer;
 
 namespace Detector
 {
@@ -11,12 +11,6 @@ namespace Detector
     {
         private double[] _samplePoints;
         private int[] _series;
-//        private int[,] _transitions1;
-//        private int[,] _transitions2;
-//        private int[,] _transitions3;
-//        private int[,] _membership1;
-//        private int[,] _membership2;
-//        private int[,] _membership3;
         private const int N1 = 32;
         private const int N2 = 8;
         private const int N3 = 2;
@@ -46,10 +40,13 @@ namespace Detector
         {
             var transitions1 = new int[N1, N1];
             var probabilities1 = new double[N1, N1];
+            var distances1 = new double[N1, N1];
             var transitions2 = new int[N2, N2];
             var probabilities2 = new double[N2, N2];
+            var distances2 = new double[N2, N2];
             var transitions3 = new int[N3, N3];
             var probabilities3 = new double[N3, N3];
+            var distances3 = new double[N3, N3];
             var membership1 = new double[N1, N2];
             var membership2 = new double[N2, N3];
 
@@ -69,7 +66,23 @@ namespace Detector
                         probabilities1[k, j] = sum == 0 ? 1.0/N1 : (double) transitions1[k, j]/sum;
                     }
                 }
+                for (var j = 0; j < N1; j++)
+                {
+                    for (var k = 0; k < N1; k++)
+                    {
+                        distances1[j, k] = 1 - (probabilities1[j, k] + probabilities1[k, j])/2;
+                    }
+                }
             }
+            var cluster1 = Clustering.SingleLinkage(Enumerable.Range(0, N1).ToArray(), (j, k) => distances1[j, k]);
+            cluster1.Print();
+            var clusters = cluster1.Extract(8);
+            foreach (var c in clusters)
+            {
+                c.Print();
+            }
+            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(probabilities1, "layer1_probabilities", 1);
+            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(distances1, "layer1_distances", 1);
         }
     }
 }
