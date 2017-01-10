@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MatrixVisualizer;
+using MoreLinq;
 
 namespace Detector
 {
@@ -40,15 +41,18 @@ namespace Detector
         {
             var transitions1 = new int[N1, N1];
             var probabilities1 = new double[N1, N1];
-            var distances1 = new double[N1, N1];
+            var distances1Mean = new double[N1, N1];
+            var distances1Min = new double[N1, N1];
             var transitions2 = new int[N2, N2];
             var probabilities2 = new double[N2, N2];
-            var distances2 = new double[N2, N2];
+            var distances2Mean = new double[N2, N2];
+            var distances2Min = new double[N2, N2];
             var transitions3 = new int[N3, N3];
             var probabilities3 = new double[N3, N3];
-            var distances3 = new double[N3, N3];
-            var membership1 = new double[N1, N2];
-            var membership2 = new double[N2, N3];
+            var distances3Mean = new double[N3, N3];
+            var distances3Min = new double[N3, N3];
+            var membership12 = new double[N1, N2];
+            var membership23 = new double[N2, N3];
 
             for (var i = 0; i < _series.Length - 1; i++)
             {
@@ -70,19 +74,18 @@ namespace Detector
                 {
                     for (var k = 0; k < N1; k++)
                     {
-                        distances1[j, k] = 1 - (probabilities1[j, k] + probabilities1[k, j])/2;
+                        distances1Mean[j, k] = 1 - (probabilities1[j, k] + probabilities1[k, j])/2;
+                        distances1Min[j, k] = 1 - Math.Max(probabilities1[j, k], probabilities1[k, j]);
                     }
                 }
             }
-            var cluster1 = Clustering.SingleLinkage(Enumerable.Range(0, N1).ToArray(), (j, k) => distances1[j, k]);
+            var cluster1 = Clustering.SingleLinkage(Enumerable.Range(0, N1).ToArray(), (j, k) => distances1Mean[j, k]);
             cluster1.Print();
-            var clusters = cluster1.Extract(8);
-            foreach (var c in clusters)
-            {
-                c.Print();
-            }
-            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(probabilities1, "layer1_probabilities", 1);
-            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(distances1, "layer1_distances", 1);
+            //var clusters = cluster1.Extract(8);
+            //clusters.ForEach(c => c.Print());
+            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(probabilities1, "layer1_probabilities", threshold: 1);
+            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(distances1Mean, "layer1_distances_mean", threshold: 1, bgWhite: false);
+            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(distances1Min, "layer1_distances_min", threshold: 1, bgWhite: false);
         }
     }
 }
