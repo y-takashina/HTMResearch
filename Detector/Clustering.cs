@@ -31,6 +31,11 @@ namespace Detector
             Value = value;
             Size = 1;
         }
+
+        public override string ToString()
+        {
+            return "Single(" + Value + ")";
+        }
     }
 
     public class Couple : Cluster
@@ -43,6 +48,11 @@ namespace Detector
             Left = left;
             Right = right;
             Size = left.Size + right.Size;
+        }
+
+        public override string ToString()
+        {
+            return "Couple(" + Left + ", " + Right + ")";
         }
     }
 
