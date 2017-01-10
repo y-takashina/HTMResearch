@@ -56,7 +56,7 @@ namespace Detector
 
             for (var i = 0; i < _series.Length - 1; i++)
             {
-                // Level 0 の遷移
+                // Level 1 の遷移
                 transitions1[_series[i], _series[i + 1]] += 1;
                 for (var j = 0; j < N1; j++)
                 {
