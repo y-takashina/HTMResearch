@@ -2,11 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using MoreLinq;
 
 namespace Detector
 {
     public abstract class Cluster
     {
+        public int Size;
+
         public void Print(string indent = "")
         {
             if (GetType() == typeof(Single)) Console.WriteLine(indent + "[ " + ((Single) this).Value + " ]");
@@ -26,6 +29,7 @@ namespace Detector
         public Single(int value)
         {
             Value = value;
+            Size = 1;
         }
     }
 
@@ -38,6 +42,7 @@ namespace Detector
         {
             Left = left;
             Right = right;
+            Size = left.Size + right.Size;
         }
     }
 
@@ -51,6 +56,21 @@ namespace Detector
         public static Couple Cluster(Cluster left, Cluster right)
         {
             return new Couple(left, right);
+        }
+
+        public static Cluster[] Extract(this Cluster self, int n)
+        {
+            if (self.Size < n) throw new Exception("Size of cluster must be greater than n.");
+            var list = new List<Cluster> {self};
+            for (var i = 1; i < n; i++)
+            {
+                var curr = list.MaxBy(c => c.Size);
+                var couple = (Couple) curr;
+                list.Add(couple.Left);
+                list.Add(couple.Right);
+                list.Remove(curr);
+            }
+            return list.ToArray();
         }
 
         public static double DistanceFromSingleToCluster(Single from, Cluster to, Func<int, int, double> metrics)
