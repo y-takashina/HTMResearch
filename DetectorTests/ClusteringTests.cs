@@ -45,5 +45,10 @@ namespace Detector.Tests
             Assert.AreEqual(clusters[0].ToString(), c1.ToString());
             Assert.AreEqual(clusters[1].ToString(), c2.ToString());
         }
+
+        [TestMethod()]
+        public void GetMembersTest()
+        {
+        }
     }
 }
