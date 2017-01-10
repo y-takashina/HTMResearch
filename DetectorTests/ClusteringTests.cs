@@ -35,5 +35,15 @@ namespace Detector.Tests
         public void SingleLinkageTest()
         {
         }
+
+        [TestMethod()]
+        public void ExtractTest()
+        {
+            var clusters = Cluster(Cluster(Cluster(60), Cluster(Cluster(68), Cluster(31))), Cluster(Cluster(99), Cluster(19))).Extract(2);
+            var c1 = Cluster(Cluster(60), Cluster(Cluster(68), Cluster(31)));
+            var c2 = Cluster(Cluster(99), Cluster(19));
+            Assert.AreEqual(clusters[0].ToString(), c1.ToString());
+            Assert.AreEqual(clusters[1].ToString(), c2.ToString());
+        }
     }
 }
