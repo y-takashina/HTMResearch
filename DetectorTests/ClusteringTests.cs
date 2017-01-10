@@ -49,6 +49,10 @@ namespace Detector.Tests
         [TestMethod()]
         public void GetMembersTest()
         {
+            // 目視する必要がある。
+            var cluster = Cluster(Cluster(Cluster(60), Cluster(Cluster(68), Cluster(31))), Cluster(Cluster(99), Cluster(19)));
+            var members = cluster.GetMembers();
+            members.ForEach(Console.WriteLine);
         }
     }
 }
