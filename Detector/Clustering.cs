@@ -32,6 +32,22 @@ namespace Detector
             Size = 1;
         }
 
+        public override bool Equals(object obj)
+        {
+            var single = obj as Single;
+            return single != null && Value == single.Value ;
+        }
+
+        protected bool Equals(Single other)
+        {
+            return Value == other.Value;
+        }
+
+        public override int GetHashCode()
+        {
+            return Value;
+        }
+
         public override string ToString()
         {
             return "Single(" + Value + ")";
