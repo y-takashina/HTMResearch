@@ -81,8 +81,8 @@ namespace Detector
             }
             var cluster1 = Clustering.SingleLinkage(Enumerable.Range(0, N1).ToArray(), (j, k) => distances1Mean[j, k]);
             cluster1.Print();
-            //var clusters = cluster1.Extract(8);
-            //clusters.ForEach(c => c.Print());
+            var singleLists = cluster1.Extract(8).Select(c => c.GetMembers());
+            singleLists.ForEach((singles, i) => Console.WriteLine(i + ": " + singles.Select(s => s.Value).Concatenate()));
             MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(probabilities1, "layer1_probabilities", threshold: 1);
             MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(distances1Mean, "layer1_distances_mean", threshold: 1, bgWhite: false);
             MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(distances1Min, "layer1_distances_min", threshold: 1, bgWhite: false);
