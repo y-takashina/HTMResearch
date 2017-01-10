@@ -31,6 +31,27 @@ namespace Detector
             Value = value;
             Size = 1;
         }
+
+        public override bool Equals(object obj)
+        {
+            var single = obj as Single;
+            return single != null && Value == single.Value ;
+        }
+
+        protected bool Equals(Single other)
+        {
+            return Value == other.Value;
+        }
+
+        public override int GetHashCode()
+        {
+            return Value;
+        }
+
+        public override string ToString()
+        {
+            return "Single(" + Value + ")";
+        }
     }
 
     public class Couple : Cluster
@@ -43,6 +64,11 @@ namespace Detector
             Left = left;
             Right = right;
             Size = left.Size + right.Size;
+        }
+
+        public override string ToString()
+        {
+            return "Couple(" + Left + ", " + Right + ")";
         }
     }
 
@@ -71,6 +97,19 @@ namespace Detector
                 list.Remove(curr);
             }
             return list.ToArray();
+        }
+
+        public static List<Single> GetMembers(this Cluster self, List<Single> acc = null)
+        {
+            if (acc == null) acc = new List<Single>();
+            if (self.GetType() == typeof(Single)) acc.Add((Single) self);
+            else
+            {
+                var couple = (Couple) self;
+                acc.AddRange(couple.Left.GetMembers());
+                acc.AddRange(couple.Right.GetMembers());
+            }
+            return acc.Distinct().ToList();
         }
 
         public static double DistanceFromSingleToCluster(Single from, Cluster to, Func<int, int, double> metrics)
