@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using MatrixVisualizer;
 using MoreLinq;
+using PipExtensions;
 
 namespace Detector
 {
@@ -78,11 +79,18 @@ namespace Detector
                         distances1Min[j, k] = 1 - Math.Max(probabilities1[j, k], probabilities1[k, j]);
                     }
                 }
+                var cluster1 = Clustering.SingleLinkage(Enumerable.Range(0, N1).ToArray(), (j, k) => distances1Mean[j, k]);
+                var cluster1Members = cluster1.Extract(N2).Select(c => c.GetMembers().Select(s => s.Value).ToArray()).ToArray();
+                var cluster1Order = cluster1Members.SelectMany(j => j).ToArray();
+                cluster1Order.ForEach(x => Console.Write(x + ", "));
+                distances1Mean = distances1Mean.OrderRaws(cluster1Order);
+                distances1Mean = distances1Mean.OrderCols(cluster1Order);
+                distances1Min = distances1Min.OrderRaws(cluster1Order);
+                distances1Min = distances1Min.OrderCols(cluster1Order);
+                //MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(cluster1Members, "layer1_distances_min", threshold: 1, bgWhite: false);
+                cluster1.Extract(N2).Select(c => c.GetMembers()).ForEach((singles, idx) => Console.WriteLine(idx + ": " + singles.Select(s => s.Value).Concatenate()));
             }
-            var cluster1 = Clustering.SingleLinkage(Enumerable.Range(0, N1).ToArray(), (j, k) => distances1Mean[j, k]);
-            cluster1.Print();
-            var singleLists = cluster1.Extract(8).Select(c => c.GetMembers());
-            singleLists.ForEach((singles, i) => Console.WriteLine(i + ": " + singles.Select(s => s.Value).Concatenate()));
+
             MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(probabilities1, "layer1_probabilities", threshold: 1);
             MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(distances1Mean, "layer1_distances_mean", threshold: 1, bgWhite: false);
             MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(distances1Min, "layer1_distances_min", threshold: 1, bgWhite: false);
