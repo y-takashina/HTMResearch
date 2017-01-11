@@ -79,6 +79,7 @@ namespace Detector
                         distances1Min[j, k] = 1 - Math.Max(probabilities1[j, k], probabilities1[k, j]);
                     }
                 }
+                // Level 1 と Level 2 に対する帰属度
                 var cluster1 = Clustering.SingleLinkage(Enumerable.Range(0, N1).ToArray(), (j, k) => distances1Mean[j, k]);
                 var cluster1Members = cluster1.Extract(N2).Select(c => c.GetMembers().Select(s => s.Value)).ToArray();
                 for (var j = 0; j < N2; j++)
