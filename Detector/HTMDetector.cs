@@ -40,18 +40,22 @@ namespace Detector
 
         public void Detect()
         {
+            // Level 1
             var transitions1 = new int[N1, N1];
             var probabilities1 = new double[N1, N1];
             var distances1Mean = new double[N1, N1];
             var distances1Min = new double[N1, N1];
+            // Level 2
             var transitions2 = new int[N2, N2];
             var probabilities2 = new double[N2, N2];
             var distances2Mean = new double[N2, N2];
             var distances2Min = new double[N2, N2];
+            // Level 3
             var transitions3 = new int[N3, N3];
             var probabilities3 = new double[N3, N3];
             var distances3Mean = new double[N3, N3];
             var distances3Min = new double[N3, N3];
+            // 帰属度行列
             var membership12 = new double[N1, N2];
             var membership23 = new double[N2, N3];
 
@@ -79,14 +83,14 @@ namespace Detector
                         distances1Min[j, k] = 1 - Math.Max(probabilities1[j, k], probabilities1[k, j]);
                     }
                 }
-                // Level 1 と Level 2 に対する帰属度
+                // Level 1 の Level 2 に対する帰属度
                 var cluster1 = Clustering.SingleLinkage(Enumerable.Range(0, N1).ToArray(), (j, k) => distances1Mean[j, k]);
                 var cluster1Members = cluster1.Extract(N2).Select(c => c.GetMembers().Select(s => s.Value)).ToArray();
-                for (var j = 0; j < N2; j++)
+                for (var j = 0; j < N1; j++)
                 {
-                    for (var k = 0; k < N1; k++)
+                    for (var k = 0; k < N2; k++)
                     {
-                        membership12[k, j] = cluster1Members[j].Contains(k) ? 1 : 0;
+                        membership12[j, k] = cluster1Members[k].Contains(j) ? 1 : 0;
                     }
                 }
             }
