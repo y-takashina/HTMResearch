@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using MatrixVisualizer;
 using MoreLinq;
 using PipExtensions;
+using MatrixVisualizer;
 
 namespace Detector
 {
@@ -41,17 +42,17 @@ namespace Detector
         public void Detect()
         {
             // Level 1
-            var transitions1 = new int[N1, N1];
+            var transitions1 = new double[N1, N1];
             var probabilities1 = new double[N1, N1];
             var distances1Mean = new double[N1, N1];
             var distances1Min = new double[N1, N1];
             // Level 2
-            var transitions2 = new int[N2, N2];
+            var transitions2 = new double[N2, N2];
             var probabilities2 = new double[N2, N2];
             var distances2Mean = new double[N2, N2];
             var distances2Min = new double[N2, N2];
             // Level 3
-            var transitions3 = new int[N3, N3];
+            var transitions3 = new double[N3, N3];
             var probabilities3 = new double[N3, N3];
             var distances3Mean = new double[N3, N3];
             var distances3Min = new double[N3, N3];
@@ -61,20 +62,9 @@ namespace Detector
 
             for (var i = 0; i < _series.Length - 1; i++)
             {
-                // Level 1 の遷移
+                // Level 1
                 transitions1[_series[i], _series[i + 1]] += 1;
-                for (var j = 0; j < N1; j++)
-                {
-                    var sum = 0;
-                    for (var k = 0; k < N1; k++)
-                    {
-                        sum += transitions1[k, j];
-                    }
-                    for (var k = 0; k < N1; k++)
-                    {
-                        probabilities1[k, j] = sum == 0 ? 1.0/N1 : (double) transitions1[k, j]/sum;
-                    }
-                }
+                probabilities1 = transitions1.NormalizeToRaw();
                 for (var j = 0; j < N1; j++)
                 {
                     for (var k = 0; k < N1; k++)
@@ -84,7 +74,7 @@ namespace Detector
                     }
                 }
                 // Level 1 の Level 2 に対する帰属度
-                var cluster1 = Clustering.SingleLinkage(Enumerable.Range(0, N1).ToArray(), (j, k) => distances1Mean[j, k]);
+                var cluster1 = Clustering.SingleLinkage(Enumerable.Range(0, N1).ToArray(), (j, k) => distances1Min[j, k]);
                 var cluster1Members = cluster1.Extract(N2).Select(c => c.GetMembers().Select(s => s.Value)).ToArray();
                 for (var j = 0; j < N1; j++)
                 {
@@ -93,7 +83,64 @@ namespace Detector
                         membership12[j, k] = cluster1Members[k].Contains(j) ? 1 : 0;
                     }
                 }
+                // Level 2
+                int from2 = -1, to2 = -1;
+                for (var j = 0; j < N2; j++)
+                {
+                    if (Math.Abs(membership12[_series[i], j] - 1) < 1e-6) from2 = j;
+                    if (Math.Abs(membership12[_series[i + 1], j] - 1) < 1e-6) to2 = j;
+                }
+                transitions2[from2, to2] += 1;
+                probabilities2 = transitions2.NormalizeToRaw();
+                for (var j = 0; j < N2; j++)
+                {
+                    for (var k = 0; k < N2; k++)
+                    {
+                        distances2Mean[j, k] = 1 - (probabilities2[j, k] + probabilities2[k, j])/2;
+                        distances2Min[j, k] = 1 - Math.Max(probabilities2[j, k], probabilities2[k, j]);
+                    }
+                }
+                // Level 2 の Level 3 に対する帰属度
+                var cluster2 = Clustering.SingleLinkage(Enumerable.Range(0, N2).ToArray(), (j, k) => distances2Min[j, k]);
+                var cluster2Members = cluster2.Extract(N3).Select(c => c.GetMembers().Select(s => s.Value)).ToArray();
+                for (var j = 0; j < N2; j++)
+                {
+                    for (var k = 0; k < N3; k++)
+                    {
+                        membership23[j, k] = cluster2Members[k].Contains(j) ? 1 : 0;
+                    }
+                }
+                // Level 3
+                int from3 = -1, to3 = -1;
+                for (var j = 0; j < N3; j++)
+                {
+                    if (Math.Abs(membership23[from2, j] - 1) < 1e-6) from3 = j;
+                    if (Math.Abs(membership23[to2, j] - 1) < 1e-6) to3 = j;
+                }
+                transitions3[from3, to3] += 1;
+                probabilities3 = transitions3.NormalizeToRaw();
+                for (var j = 0; j < N3; j++)
+                {
+                    for (var k = 0; k < N3; k++)
+                    {
+                        distances3Mean[j, k] = 1 - (probabilities3[j, k] + probabilities3[k, j])/2;
+                        distances3Min[j, k] = 1 - Math.Max(probabilities3[j, k], probabilities3[k, j]);
+                    }
+                }
             }
+            //var g1 = membership12.Mul(membership23.Mul(new double[] {1, 0, 0, 0}));
+            //var g2 = membership12.Mul(membership23.Mul(new double[] {0, 1, 0, 0}));
+            //var g3 = membership12.Mul(membership23.Mul(new double[] {0, 0, 1, 0}));
+            //var g4 = membership12.Mul(membership23.Mul(new double[] {0, 0, 0, 1}));
+            //g1.ForEach((p, i) => { if (Math.Abs(p - 1) < 1e-6) Console.Write(_samplePoints[i] + ", "); });
+            //Console.WriteLine();
+            //g2.ForEach((p, i) => { if (Math.Abs(p - 1) < 1e-6) Console.Write(_samplePoints[i] + ", "); });
+            //Console.WriteLine();
+            //g3.ForEach((p, i) => { if (Math.Abs(p - 1) < 1e-6) Console.Write(_samplePoints[i] + ", "); });
+            //Console.WriteLine();
+            //g4.ForEach((p, i) => { if (Math.Abs(p - 1) < 1e-6) Console.Write(_samplePoints[i] + ", "); });
+            //Console.WriteLine();
+            // 並べ替えて表示云々
             //var cluster1 = Clustering.SingleLinkage(Enumerable.Range(0, N1).ToArray(), (j, k) => distances1Mean[j, k]);
             //var cluster1Members = cluster1.Extract(N2).Select(c => c.GetMembers().Select(s => s.Value).ToArray()).ToArray();
             //var cluster1Order = cluster1Members.SelectMany(j => j).ToArray();
@@ -103,11 +150,17 @@ namespace Detector
             //distances1Min = distances1Min.OrderCols(cluster1Order);
             //cluster1.Extract(N2).Select(c => c.GetMembers()).ForEach((singles, idx) => Console.WriteLine(idx + ": " + singles.Select(s => s.Value).Concatenate()));
             //cluster1Order.ForEach(x => Console.Write(x + ", "));
-
-            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(probabilities1, "layer1_probabilities", threshold: 1);
-            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(distances1Mean, "layer1_distances_mean", threshold: 1, bgWhite: false);
-            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(distances1Min, "layer1_distances_min", threshold: 1, bgWhite: false);
-            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(membership12, "layer12_membership", threshold: 1, bgWhite: false);
+            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(probabilities1, "layer1_probabilities");
+            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(distances1Mean, "layer1_distances_mean", threshold: double.MaxValue, bgWhite: false);
+            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(distances1Min, "layer1_distances_min", threshold: double.MaxValue, bgWhite: false);
+            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(membership12, "layer12_membership");
+            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(probabilities2, "layer2_probabilities");
+            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(distances2Mean, "layer2_distances_mean", threshold: double.MaxValue, bgWhite: false);
+            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(distances2Min, "layer2_distances_min", threshold: double.MaxValue, bgWhite: false);
+            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(membership23, "layer23_membership");
+            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(probabilities3, "layer3_probabilities");
+            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(distances3Mean, "layer3_distances_mean", threshold: 1, bgWhite: false);
+            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(distances3Min, "layer3_distances_min", threshold: 1, bgWhite: false);
         }
     }
 }
