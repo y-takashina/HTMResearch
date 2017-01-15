@@ -59,7 +59,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MatViz\MatViz.csproj">
-      <Project>{31636f5f-347b-4ddc-8309-ccc4cad068e0}</Project>
+      <Project>{B6F077BC-DAD9-4FF2-B831-1C79BA2E790B}</Project>
       <Name>MatViz</Name>
     </ProjectReference>
     <ProjectReference Include="..\NabViz\NabViz.csproj">
