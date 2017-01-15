@@ -1,12 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using MatrixVisualizer;
-using MoreLinq;
 using PipExtensions;
-using MatrixVisualizer;
+using MatViz;
 
 namespace Detector
 {
@@ -150,20 +145,20 @@ namespace Detector
             //distances1Min = distances1Min.OrderCols(cluster1Order);
             //cluster1.Extract(N2).Select(c => c.GetMembers()).ForEach((singles, idx) => Console.WriteLine(idx + ": " + singles.Select(s => s.Value).Concatenate()));
             //cluster1Order.ForEach(x => Console.Write(x + ", "));
-            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(transitions1, "layer1_transitions");
-            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(probabilities1, "layer1_probabilities");
-            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(distances1Mean, "layer1_distances_mean", threshold: double.MaxValue, bgWhite: false);
-            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(distances1Min, "layer1_distances_min", threshold: double.MaxValue, bgWhite: false);
-            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(membership12, "layer12_membership");
-            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(transitions2, "layer2_transitions");
-            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(probabilities2, "layer2_probabilities");
-            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(distances2Mean, "layer2_distances_mean", threshold: double.MaxValue, bgWhite: false);
-            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(distances2Min, "layer2_distances_min", threshold: double.MaxValue, bgWhite: false);
-            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(membership23, "layer23_membership");
-            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(transitions3, "layer3_transitions");
-            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(probabilities3, "layer3_probabilities");
-            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(distances3Mean, "layer3_distances_mean", threshold: 1, bgWhite: false);
-            MatrixVisualizer.MatrixVisualizer.SaveMatrixImage(distances3Min, "layer3_distances_min", threshold: 1, bgWhite: false);
+            MatViz.MatViz.SaveMatrixImage(transitions1, "layer1_transitions");
+            MatViz.MatViz.SaveMatrixImage(probabilities1, "layer1_probabilities");
+            MatViz.MatViz.SaveMatrixImage(distances1Mean, "layer1_distances_mean", threshold: double.MaxValue, bgWhite: false);
+            MatViz.MatViz.SaveMatrixImage(distances1Min, "layer1_distances_min", threshold: double.MaxValue, bgWhite: false);
+            MatViz.MatViz.SaveMatrixImage(membership12, "layer12_membership");
+            MatViz.MatViz.SaveMatrixImage(transitions2, "layer2_transitions");
+            MatViz.MatViz.SaveMatrixImage(probabilities2, "layer2_probabilities");
+            MatViz.MatViz.SaveMatrixImage(distances2Mean, "layer2_distances_mean", threshold: double.MaxValue, bgWhite: false);
+            MatViz.MatViz.SaveMatrixImage(distances2Min, "layer2_distances_min", threshold: double.MaxValue, bgWhite: false);
+            MatViz.MatViz.SaveMatrixImage(membership23, "layer23_membership");
+            MatViz.MatViz.SaveMatrixImage(transitions3, "layer3_transitions");
+            MatViz.MatViz.SaveMatrixImage(probabilities3, "layer3_probabilities");
+            MatViz.MatViz.SaveMatrixImage(distances3Mean, "layer3_distances_mean", threshold: 1, bgWhite: false);
+            MatViz.MatViz.SaveMatrixImage(distances3Min, "layer3_distances_min", threshold: 1, bgWhite: false);
         }
     }
 }

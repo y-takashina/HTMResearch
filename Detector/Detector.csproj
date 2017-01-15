@@ -58,9 +58,9 @@
     <Compile Include="Sampling.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\MatrixVisualizer\MatrixVisualizer.csproj">
+    <ProjectReference Include="..\MatViz\MatViz.csproj">
       <Project>{31636f5f-347b-4ddc-8309-ccc4cad068e0}</Project>
-      <Name>MatrixVisualizer</Name>
+      <Name>MatViz</Name>
     </ProjectReference>
     <ProjectReference Include="..\NabViz\NabViz.csproj">
       <Project>{0b19557f-ea58-4486-a98e-396e5f1c7965}</Project>
