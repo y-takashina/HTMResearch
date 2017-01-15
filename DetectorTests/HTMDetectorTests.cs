@@ -10,14 +10,13 @@ namespace Detector.Tests
         [TestMethod()]
         public void DetectTest()
         {
-            using (var dr = new DataReader(@"..\data\realAWSCloudwatch\ec2_cpu_utilization_53ea38.csv"))
+            var detector = new HTMDetector();
+            using (var dr = new DataReader(@"..\data\realAWSCloudwatch\ec2_cpu_utilization_5f5533.csv"))
             {
                 var data = dr.GetLines();
-                Console.WriteLine(data);
-                var detector = new HTMDetector();
                 detector.Initialize(data);
-                detector.Detect();
             }
+            detector.Detect();
         }
     }
 }
