@@ -2,6 +2,7 @@
 using System.Linq;
 using PipExtensions;
 using MatViz;
+using MoreLinq;
 
 namespace Detector
 {
@@ -9,6 +10,7 @@ namespace Detector
     {
         private double[] _samplePoints;
         private int[] _series;
+        private int[] _predictedSeries;
         private const int N1 = 64;
         private const int N2 = 16;
         private const int N3 = 4;
@@ -54,6 +56,10 @@ namespace Detector
             // 帰属度行列
             var membership12 = new double[N1, N2];
             var membership23 = new double[N2, N3];
+
+            // 状態
+            var state1 = new double[N1];
+            var state2 = new double[N2];
 
             for (var i = 0; i < _series.Length - 1; i++)
             {
@@ -122,6 +128,18 @@ namespace Detector
                         distances3Min[j, k] = 1 - Math.Max(probabilities3[j, k], probabilities3[k, j]);
                     }
                 }
+
+                for (var j = 0; j < N1; j++)
+                {
+                    state1[j] = _series[i + 1] == j ? 1 : 0;
+                }
+                var message1 = membership12.Mul(state1);
+                var message2 = probabilities2.Mul(state2);
+                for (var j = 0; j < N1; j++) state2[j] = message1[j]*message2[j];
+                var sum = state2.Sum();
+                state2 = state2.Select(v => v/sum).ToArray();
+                var prediction = membership12.Mul(probabilities2).Mul(state2).ToList();
+                _predictedSeries[i + 2] = prediction.IndexOf(prediction.Max());
             }
             //var g1 = membership12.Mul(membership23.Mul(new double[] {1, 0, 0, 0}));
             //var g2 = membership12.Mul(membership23.Mul(new double[] {0, 1, 0, 0}));
