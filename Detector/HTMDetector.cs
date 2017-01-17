@@ -3,6 +3,7 @@ using System.Linq;
 using PipExtensions;
 using MatViz;
 using MoreLinq;
+using RakuChart;
 
 namespace Detector
 {
@@ -11,14 +12,19 @@ namespace Detector
         private double[] _samplePoints;
         private int[] _series;
         private int[] _predictedSeries;
-        private const int N1 = 64;
-        private const int N2 = 16;
+        private int[] _predictedSeries2;
+        private double[] _errorSeries;
+        private const int N1 = 32;
+        private const int N2 = 8;
         private const int N3 = 4;
 
         public void Initialize(double[] rawData)
         {
             _samplePoints = Sampling.CalcSamplePoints(rawData, N1);
             _series = new int[rawData.Length];
+            _predictedSeries = new int[rawData.Length];
+            _predictedSeries2 = new int[rawData.Length];
+            _errorSeries = new double[rawData.Length];
             for (var i = 0; i < rawData.Length; i++)
             {
                 var min = double.MaxValue;
@@ -59,9 +65,9 @@ namespace Detector
 
             // 状態
             var state1 = new double[N1];
-            var state2 = new double[N2];
+            var state2 = Enumerable.Range(0, N2).Select(i => 1.0/N2).ToArray();
 
-            for (var i = 0; i < _series.Length - 1; i++)
+            for (var i = 0; i < _series.Length - 2; i++)
             {
                 // Level 1
                 transitions1[_series[i], _series[i + 1]] += 1;
@@ -81,7 +87,7 @@ namespace Detector
                 {
                     for (var k = 0; k < N2; k++)
                     {
-                        membership12[j, k] = cluster1Members[k].Contains(j) ? 1 : 0;
+                        membership12[j, k] = cluster1Members[k].Contains(j) ? 1 : 1e-6;
                     }
                 }
                 // Level 2
@@ -108,7 +114,7 @@ namespace Detector
                 {
                     for (var k = 0; k < N3; k++)
                     {
-                        membership23[j, k] = cluster2Members[k].Contains(j) ? 1 : 0;
+                        membership23[j, k] = cluster2Members[k].Contains(j) ? 1 : 1e-6;
                     }
                 }
                 // Level 3
@@ -131,16 +137,24 @@ namespace Detector
 
                 for (var j = 0; j < N1; j++)
                 {
-                    state1[j] = _series[i + 1] == j ? 1 : 0;
+                    state1[j] = _series[i + 1] == j ? 1 : 1e-6;
                 }
-                var message1 = membership12.Mul(state1);
+                var message1 = membership12.T().Mul(state1);
                 var message2 = probabilities2.Mul(state2);
-                for (var j = 0; j < N1; j++) state2[j] = message1[j]*message2[j];
+                for (var j = 0; j < N2; j++) state2[j] = message1[j]*message2[j];
                 var sum = state2.Sum();
-                state2 = state2.Select(v => v/sum).ToArray();
-                var prediction = membership12.Mul(probabilities2).Mul(state2).ToList();
+                for (var j = 0; j < N2; j++) state2[j] /= sum;
+                var prediction = membership12.Mul(probabilities2.Mul(state2)).ToList();
                 _predictedSeries[i + 2] = prediction.IndexOf(prediction.Max());
+                var m = probabilities1.Mul(state1).ToList();
+                //_predictedSeries2[i + 2] = m.IndexOf(m.Max());
+                _errorSeries[i + 2] = prediction[_series[i + 2]];
+                //state2.ForEach(v => Console.Write(v.ToString("F4") + ", "));
+                //Console.WriteLine();
             }
+            ChartExtensions.CreateChart(_series.Select(i => _samplePoints[i]).ToArray(), _predictedSeries.Select(i => _samplePoints[i]).ToArray(), _predictedSeries2.Select(i => _samplePoints[i]).ToArray()).SaveImage("test");
+            ChartExtensions.CreateChart(_errorSeries).SaveImage("test2");
+            //_predictedSeries.ForEach(v => Console.Write(v + ", "));
             //var g1 = membership12.Mul(membership23.Mul(new double[] {1, 0, 0, 0}));
             //var g2 = membership12.Mul(membership23.Mul(new double[] {0, 1, 0, 0}));
             //var g3 = membership12.Mul(membership23.Mul(new double[] {0, 0, 1, 0}));
