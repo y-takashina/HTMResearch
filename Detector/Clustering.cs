@@ -130,32 +130,32 @@ namespace Detector
 
         public static double ShortestDistanceFromSingleToCluster(Single from, Cluster to, Func<int, int, double> metrics)
         {
-            return DistanceFromSingleToCluster(from, to, metrics, (t1, t2) => t1.Item1 < t2.Item1 ? t1.Item1 : t2.Item1);
+            return DistanceFromSingleToCluster(from, to, metrics, Metrics.Shortest);
         }
 
         public static double ShortestDistanceFromClusterToCluster(Cluster from, Cluster to, Func<int, int, double> metrics)
         {
-            return DistanceFromClusterToCluster(from, to, metrics, (t1, t2) => t1.Item1 < t2.Item1 ? t1.Item1 : t2.Item1);
+            return DistanceFromClusterToCluster(from, to, metrics, Metrics.Shortest);
         }
 
         public static double LongestDistanceFromSingleToCluster(Single from, Cluster to, Func<int, int, double> metrics)
         {
-            return DistanceFromSingleToCluster(from, to, metrics, (t1, t2) => t1.Item1 > t2.Item1 ? t1.Item1 : t2.Item1);
+            return DistanceFromSingleToCluster(from, to, metrics, Metrics.Longest);
         }
 
         public static double LongestDistanceFromClusterToCluster(Cluster from, Cluster to, Func<int, int, double> metrics)
         {
-            return DistanceFromClusterToCluster(from, to, metrics, (t1, t2) => t1.Item1 > t2.Item1 ? t1.Item1 : t2.Item1);
+            return DistanceFromClusterToCluster(from, to, metrics, Metrics.Longest);
         }
 
         public static double GroupAverageDistanceFromSingleToCluster(Single from, Cluster to, Func<int, int, double> metrics)
         {
-            return DistanceFromSingleToCluster(from, to, metrics, (t1, t2) => (double) t1.Item2/(t1.Item2 + t2.Item2)*t1.Item1 + (double) t2.Item2/(t1.Item2 + t2.Item2)*t2.Item1);
+            return DistanceFromSingleToCluster(from, to, metrics, Metrics.GroupAverage);
         }
 
         public static double GroupAverageDistanceFromClusterToCluster(Cluster from, Cluster to, Func<int, int, double> metrics)
         {
-            return DistanceFromClusterToCluster(from, to, metrics, (t1, t2) => (double) t1.Item2/(t1.Item2 + t2.Item2)*t1.Item1 + (double) t2.Item2/(t1.Item2 + t2.Item2)*t2.Item1);
+            return DistanceFromClusterToCluster(from, to, metrics, Metrics.GroupAverage);
         }
 
         public static Cluster AggregativeHierarchicalClustering(int[] data, Func<int, int, double> metrics, Func<Tuple<double, int>, Tuple<double, int>, double> metrics2)
@@ -184,32 +184,6 @@ namespace Detector
                 clusters.Remove(c2);
             }
             return clusters.First();
-        }
-
-        public enum AHCType
-        {
-            Shortest,
-            Longest,
-            GroupAverage
-        }
-
-        public static Cluster AggregativeHierarchicalClusteringByName(int[] data, Func<int, int, double> metrics, AHCType type)
-        {
-            Func<Tuple<double, int>, Tuple<double, int>, double> metrics2;
-            switch (type)
-            {
-                case AHCType.Shortest:
-                    metrics2 = (t1, t2) => t1.Item1 < t2.Item1 ? t1.Item1 : t2.Item1;
-                    break;
-                case AHCType.Longest:
-                    metrics2 = (t1, t2) => t1.Item1 > t2.Item1 ? t1.Item1 : t2.Item1;
-                    break;
-                case AHCType.GroupAverage:
-                default:
-                    metrics2 = (t1, t2) => (double) t1.Item2/(t1.Item2 + t2.Item2)*t1.Item1 + (double) t2.Item2/(t1.Item2 + t2.Item2)*t2.Item1;
-                    break;
-            }
-            return AggregativeHierarchicalClustering(data, metrics, metrics2);
         }
     }
 }
