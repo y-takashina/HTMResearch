@@ -205,8 +205,6 @@ namespace Detector
                     metrics2 = (t1, t2) => t1.Item1 > t2.Item1 ? t1.Item1 : t2.Item1;
                     break;
                 case AHCType.GroupAverage:
-                    metrics2 = (t1, t2) => (double) t1.Item2/(t1.Item2 + t2.Item2)*t1.Item1 + (double) t2.Item2/(t1.Item2 + t2.Item2)*t2.Item1;
-                    break;
                 default:
                     metrics2 = (t1, t2) => (double) t1.Item2/(t1.Item2 + t2.Item2)*t1.Item1 + (double) t2.Item2/(t1.Item2 + t2.Item2)*t2.Item1;
                     break;
