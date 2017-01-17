@@ -9,9 +9,9 @@ namespace Detector
     {
         private double[] _samplePoints;
         private int[] _series;
-        private const int N1 = 32;
-        private const int N2 = 8;
-        private const int N3 = 2;
+        private const int N1 = 64;
+        private const int N2 = 16;
+        private const int N3 = 4;
 
         public void Initialize(double[] rawData)
         {
@@ -69,7 +69,7 @@ namespace Detector
                     }
                 }
                 // Level 1 の Level 2 に対する帰属度
-                var cluster1 = Clustering.SingleLinkage(Enumerable.Range(0, N1).ToArray(), (j, k) => distances1Min[j, k]);
+                var cluster1 = Clustering.AggregativeHierarchicalClusteringByName(Enumerable.Range(0, N1).ToArray(), (j, k) => distances1Min[j, k], Clustering.AHCType.GroupAverage);
                 var cluster1Members = cluster1.Extract(N2).Select(c => c.GetMembers().Select(s => s.Value)).ToArray();
                 for (var j = 0; j < N1; j++)
                 {
@@ -96,7 +96,7 @@ namespace Detector
                     }
                 }
                 // Level 2 の Level 3 に対する帰属度
-                var cluster2 = Clustering.SingleLinkage(Enumerable.Range(0, N2).ToArray(), (j, k) => distances2Min[j, k]);
+                var cluster2 = Clustering.AggregativeHierarchicalClusteringByName(Enumerable.Range(0, N2).ToArray(), (j, k) => distances2Min[j, k], Clustering.AHCType.GroupAverage);
                 var cluster2Members = cluster2.Extract(N3).Select(c => c.GetMembers().Select(s => s.Value)).ToArray();
                 for (var j = 0; j < N2; j++)
                 {
@@ -136,7 +136,7 @@ namespace Detector
             //g4.ForEach((p, i) => { if (Math.Abs(p - 1) < 1e-6) Console.Write(_samplePoints[i] + ", "); });
             //Console.WriteLine();
             // 並べ替えて表示云々
-            //var cluster1 = Clustering.SingleLinkage(Enumerable.Range(0, N1).ToArray(), (j, k) => distances1Mean[j, k]);
+            //var cluster1 = Clustering.AggregativeHierarchicalClustering(Enumerable.Range(0, N1).ToArray(), (j, k) => distances1Mean[j, k]);
             //var cluster1Members = cluster1.Extract(N2).Select(c => c.GetMembers().Select(s => s.Value).ToArray()).ToArray();
             //var cluster1Order = cluster1Members.SelectMany(j => j).ToArray();
             //distances1Mean = distances1Mean.OrderRaws(cluster1Order);
