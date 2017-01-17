@@ -42,6 +42,7 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Windows.Forms.DataVisualization" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -70,6 +71,10 @@
     <ProjectReference Include="..\PipExtensions\PipExtensions.csproj">
       <Project>{7728F4CF-46AF-437C-802A-62EDBF7C5154}</Project>
       <Name>PipExtensions</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\RakuChart\RakuChart.csproj">
+      <Project>{BBB5ECC1-9F49-4567-81A3-0C95833EF8D0}</Project>
+      <Name>RakuChart</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
