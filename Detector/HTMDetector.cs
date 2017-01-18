@@ -4,16 +4,17 @@ using PipExtensions;
 using MatViz;
 using MoreLinq;
 using RakuChart;
+using static PipExtensions.PipExtensions;
 
 namespace Detector
 {
     public class HTMDetector
     {
         private double[] _samplePoints;
+        private double[] _frequencies;
         private int[] _series;
         private int[] _predictedSeries;
-        private int[] _predictedSeries2;
-        private double[] _errorSeries;
+        private double[] _mutualInformations;
         private const int N1 = 32;
         private const int N2 = 8;
         private const int N3 = 4;
@@ -21,10 +22,10 @@ namespace Detector
         public void Initialize(double[] rawData)
         {
             _samplePoints = Sampling.CalcSamplePoints(rawData, N1);
+            _frequencies = new double[N1];
             _series = new int[rawData.Length];
             _predictedSeries = new int[rawData.Length];
-            _predictedSeries2 = new int[rawData.Length];
-            _errorSeries = new double[rawData.Length];
+            _mutualInformations = new double[rawData.Length];
             for (var i = 0; i < rawData.Length; i++)
             {
                 var min = double.MaxValue;
@@ -134,6 +135,8 @@ namespace Detector
                     }
                 }
             }
+            _frequencies = Enumerable.Range(0, N1).Select(i => (double) _series.Where(v => v == i).Count()/_series.Length).ToArray();
+
             // 状態
             var state1 = new double[N1];
             var state2 = Enumerable.Range(0, N2).Select(i => 1.0/N2).ToArray();
@@ -150,15 +153,17 @@ namespace Detector
                 var sum = state2.Sum();
                 for (var j = 0; j < N2; j++) state2[j] = sum < 1e-12 ? 1.0/N2 : state2[j]/sum;
                 var prediction = membership12.Mul(probabilities2.Mul(state2));
+                _mutualInformations[i + 1] = Entropy(_frequencies) - Entropy(prediction);
                 _predictedSeries[i + 1] = prediction.ToList().IndexOf(prediction.Max());
                 //var m = probabilities1.Mul(state1).ToList();
                 //_predictedSeries2[i + 1] = m.IndexOf(m.Max());
-                _errorSeries[i + 1] = -Math.Log(prediction[_series[i + 1]], 2);
+                //var x = -Math.Log(prediction[_series[i + 1]], 2);
                 //state2.ForEach(v => Console.Write(v.ToString("F4") + ", "));
                 //Console.WriteLine();
             }
-            ChartExtensions.CreateChart(_series.Select(i => _samplePoints[i]).ToArray(), _predictedSeries.Select(i => _samplePoints[i]).ToArray()).SaveImage("test");
-            ChartExtensions.CreateChart(_errorSeries).SaveImage("test2");
+            ChartExtensions.CreateChart(_series.Select(i => _samplePoints[i]).ToArray(), _predictedSeries.Select(i => _samplePoints[i]).ToArray()).SaveImage("prediction");
+            ChartExtensions.CreateChart(_mutualInformations).SaveImage("mutual_information");
+            //_mutualInformations.ForEach(v => Console.Write(v.ToString("F4") + "\n"));
             //_predictedSeries.ForEach(v => Console.Write(v + ", "));
             //var g1 = membership12.Mul(membership23.Mul(new double[] {1, 0, 0, 0}));
             //var g2 = membership12.Mul(membership23.Mul(new double[] {0, 1, 0, 0}));
