@@ -84,7 +84,7 @@ namespace Detector
                 {
                     for (var k = 0; k < N2; k++)
                     {
-                        var sum = cluster1Members.Length;
+                        var sum = cluster1Members[k].Count();
                         membership12[j, k] = cluster1Members[k].Contains(j) ? 1.0/sum : 0;
                     }
                 }
@@ -112,7 +112,7 @@ namespace Detector
                 {
                     for (var k = 0; k < N3; k++)
                     {
-                        var sum = cluster2Members.Length;
+                        var sum = cluster2Members[k].Count();
                         membership23[j, k] = cluster2Members[k].Contains(j) ? 1.0/sum : 0;
                     }
                 }
@@ -148,9 +148,9 @@ namespace Detector
                 var message2 = probabilities2.Mul(state2);
                 for (var j = 0; j < N2; j++) state2[j] = message1[j]*message2[j];
                 var sum = state2.Sum();
-                for (var j = 0; j < N2; j++) state2[j] /= sum;
-                var prediction = membership12.Mul(probabilities2.Mul(state2)).ToList();
-                _predictedSeries[i + 1] = prediction.IndexOf(prediction.Max());
+                for (var j = 0; j < N2; j++) state2[j] = sum < 1e-12 ? 1.0/N2 : state2[j]/sum;
+                var prediction = membership12.Mul(probabilities2.Mul(state2));
+                _predictedSeries[i + 1] = prediction.ToList().IndexOf(prediction.Max());
                 //var m = probabilities1.Mul(state1).ToList();
                 //_predictedSeries2[i + 1] = m.IndexOf(m.Max());
                 _errorSeries[i + 1] = -Math.Log(prediction[_series[i + 1]], 2);
