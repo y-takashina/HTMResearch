@@ -78,10 +78,10 @@ namespace Detector.Tests
             var cluster = Cluster(Cluster(Cluster(60), Cluster(Cluster(68), Cluster(31))), Cluster(Cluster(99), Cluster(19)));
             var largeCluster = Cluster(Cluster(35), Cluster(Cluster(Cluster(Cluster(77), Cluster(Cluster(34), Cluster(22))), Cluster(Cluster(Cluster(69),
                 Cluster(Cluster(69), Cluster(33))), Cluster(Cluster(95), Cluster(22)))), Cluster(Cluster(Cluster(8), Cluster(38)), Cluster(72))));
-            var d = LongestDistanceFromSingleToCluster(single, cluster, (x, y) => Math.Abs(x - y));
-            Assert.AreEqual(d, 98);
-            d = LongestDistanceFromSingleToCluster(single, largeCluster, (x, y) => Math.Abs(x - y));
-            Assert.AreEqual(d, 94);
+            var d1 = LongestDistanceFromSingleToCluster(single, cluster, (x, y) => Math.Abs(x - y));
+            Assert.AreEqual(d1, 98);
+            var d2 = LongestDistanceFromSingleToCluster(single, largeCluster, (x, y) => Math.Abs(x - y));
+            Assert.AreEqual(d2, 94);
         }
 
         [TestMethod()]

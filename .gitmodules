@@ -7,3 +7,6 @@
 [submodule "PipExtensions"]
 	path = PipExtensions
 	url = https://github.com/y-takashina/PipExtensions.git
+[submodule "RakuChart"]
+	path = RakuChart
+	url = https://github.com/y-takashina/RakuChart.git

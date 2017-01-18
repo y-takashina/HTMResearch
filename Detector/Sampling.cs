@@ -16,7 +16,10 @@ namespace Detector
             var min = average - 3*stddev;
             var max = average + 3*stddev;
             var unit = (max - min)/n;
-            return Enumerable.Range(0, n).Select(i => max - i*unit).ToArray();
+            var points = Enumerable.Range(0, n).Select(i => max - i*unit).ToArray();
+            points[0] = average + 4*stddev;
+            points[n - 1] = average - 4*stddev;
+            return points;
         }
     }
 }

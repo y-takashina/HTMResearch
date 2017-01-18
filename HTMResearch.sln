@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PipExtensionsTests", "PipEx
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DetectorTests", "DetectorTests\DetectorTests.csproj", "{14947FFC-A73F-4269-A8A0-F0F86F85647D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RakuChart", "RakuChart\RakuChart.csproj", "{BBB5ECC1-9F49-4567-81A3-0C95833EF8D0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{14947FFC-A73F-4269-A8A0-F0F86F85647D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{14947FFC-A73F-4269-A8A0-F0F86F85647D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{14947FFC-A73F-4269-A8A0-F0F86F85647D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BBB5ECC1-9F49-4567-81A3-0C95833EF8D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BBB5ECC1-9F49-4567-81A3-0C95833EF8D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BBB5ECC1-9F49-4567-81A3-0C95833EF8D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BBB5ECC1-9F49-4567-81A3-0C95833EF8D0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
