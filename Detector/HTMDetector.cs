@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Linq;
 using PipExtensions;
-using MatViz;
-using MoreLinq;
 using RakuChart;
+using static MatViz.MatViz;
 using static PipExtensions.PipExtensions;
 
 namespace Detector
@@ -141,7 +140,7 @@ namespace Detector
             var state1 = new double[N1];
             var state2 = prior2.Select(x => x).ToArray();
             // 予測
-            for (var i = 0; i < _series.Length - 1; i++)
+            for (var i = _series.Length/2; i < _series.Length - 1; i++)
             {
                 for (var j = 0; j < N1; j++)
                 {
@@ -153,18 +152,10 @@ namespace Detector
                 var sum = state2.Sum();
                 for (var j = 0; j < N2; j++) state2[j] = sum < 1e-12 ? 1.0/N2 : state2[j]/sum;
                 var prediction = membership12.Mul(probabilities2.Mul(state2));
-                _mutualInformations[i + 1] = Entropy(prior1) - Entropy(prediction);
                 _predictedSeries[i + 1] = prediction.ToList().IndexOf(prediction.Max());
-                //var m = probabilities1.Mul(state1).ToList();
-                //_predictedSeries2[i + 1] = m.IndexOf(m.Max());
-                //var x = -Math.Log(prediction[_series[i + 1]], 2);
-                //state2.ForEach(v => Console.Write(v.ToString("F4") + ", "));
-                //Console.WriteLine();
+                _mutualInformations[i + 1] = Entropy(prior1) - Entropy(prediction);
             }
-            ChartExtensions.CreateChart(_series.Select(i => _samplePoints[i]).ToArray(), _predictedSeries.Select(i => _samplePoints[i]).ToArray()).SaveImage("prediction");
-            ChartExtensions.CreateChart(_mutualInformations).SaveImage("mutual_information");
             //_mutualInformations.ForEach(v => Console.Write(v.ToString("F4") + "\n"));
-            //_predictedSeries.ForEach(v => Console.Write(v + ", "));
             //var g1 = membership12.Mul(membership23.Mul(new double[] {1, 0, 0, 0}));
             //var g2 = membership12.Mul(membership23.Mul(new double[] {0, 1, 0, 0}));
             //var g3 = membership12.Mul(membership23.Mul(new double[] {0, 0, 1, 0}));
@@ -187,20 +178,22 @@ namespace Detector
             //membership12 = membership12.OrderRaws(cluster1Order);
             //c1.Extract(N2).Select(c => c.GetMembers()).ForEach((singles, idx) => Console.WriteLine(idx + ": " + singles.Select(s => s.Value).Concatenate()));
             //cluster1Order.ForEach(x => Console.Write(x + ", "));
-            MatViz.MatViz.SaveMatrixImage(transitions1, "layer1_transitions");
-            MatViz.MatViz.SaveMatrixImage(probabilities1, "layer1_probabilities");
-            MatViz.MatViz.SaveMatrixImage(distances1Mean, "layer1_distances_mean", threshold: double.MaxValue, bgWhite: false);
-            MatViz.MatViz.SaveMatrixImage(distances1Min, "layer1_distances_min", threshold: double.MaxValue, bgWhite: false);
-            MatViz.MatViz.SaveMatrixImage(membership12, "layer12_membership");
-            MatViz.MatViz.SaveMatrixImage(transitions2, "layer2_transitions");
-            MatViz.MatViz.SaveMatrixImage(probabilities2, "layer2_probabilities");
-            MatViz.MatViz.SaveMatrixImage(distances2Mean, "layer2_distances_mean", threshold: double.MaxValue, bgWhite: false);
-            MatViz.MatViz.SaveMatrixImage(distances2Min, "layer2_distances_min", threshold: double.MaxValue, bgWhite: false);
-            MatViz.MatViz.SaveMatrixImage(membership23, "layer23_membership");
-            MatViz.MatViz.SaveMatrixImage(transitions3, "layer3_transitions");
-            MatViz.MatViz.SaveMatrixImage(probabilities3, "layer3_probabilities");
-            MatViz.MatViz.SaveMatrixImage(distances3Mean, "layer3_distances_mean", threshold: 1, bgWhite: false);
-            MatViz.MatViz.SaveMatrixImage(distances3Min, "layer3_distances_min", threshold: 1, bgWhite: false);
+            SaveMatrixImage(transitions1, "layer1_transitions");
+            SaveMatrixImage(probabilities1, "layer1_probabilities");
+            SaveMatrixImage(distances1Mean, "layer1_distances_mean", threshold: double.MaxValue, bgWhite: false);
+            SaveMatrixImage(distances1Min, "layer1_distances_min", threshold: double.MaxValue, bgWhite: false);
+            SaveMatrixImage(membership12, "layer12_membership");
+            SaveMatrixImage(transitions2, "layer2_transitions");
+            SaveMatrixImage(probabilities2, "layer2_probabilities");
+            SaveMatrixImage(distances2Mean, "layer2_distances_mean", threshold: double.MaxValue, bgWhite: false);
+            SaveMatrixImage(distances2Min, "layer2_distances_min", threshold: double.MaxValue, bgWhite: false);
+            SaveMatrixImage(membership23, "layer23_membership");
+            SaveMatrixImage(transitions3, "layer3_transitions");
+            SaveMatrixImage(probabilities3, "layer3_probabilities");
+            SaveMatrixImage(distances3Mean, "layer3_distances_mean", threshold: 1, bgWhite: false);
+            SaveMatrixImage(distances3Min, "layer3_distances_min", threshold: 1, bgWhite: false);
+            ChartExtensions.CreateChart(_series.Select(i => _samplePoints[i]).ToArray(), _predictedSeries.Select(i => _samplePoints[i]).ToArray()).SaveImage("prediction");
+            ChartExtensions.CreateChart(_mutualInformations).SaveImage("mutual_information");
         }
     }
 }
