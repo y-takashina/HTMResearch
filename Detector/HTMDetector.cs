@@ -11,7 +11,6 @@ namespace Detector
     public class HTMDetector
     {
         private double[] _samplePoints;
-        private double[] _frequencies;
         private int[] _series;
         private int[] _predictedSeries;
         private double[] _mutualInformations;
@@ -22,7 +21,6 @@ namespace Detector
         public void Initialize(double[] rawData)
         {
             _samplePoints = Sampling.CalcSamplePoints(rawData, N1);
-            _frequencies = new double[N1];
             _series = new int[rawData.Length];
             _predictedSeries = new int[rawData.Length];
             _mutualInformations = new double[rawData.Length];
@@ -135,11 +133,13 @@ namespace Detector
                     }
                 }
             }
-            _frequencies = Enumerable.Range(0, N1).Select(i => (double) _series.Where(v => v == i).Count()/_series.Length).ToArray();
 
+            // 事前分布
+            var prior1 = Enumerable.Range(0, N1).Select(i => 1.0/N1).ToArray();
+            var prior2 = Enumerable.Range(0, N2).Select(i => 1.0/N1).ToArray();
             // 状態
             var state1 = new double[N1];
-            var state2 = Enumerable.Range(0, N2).Select(i => 1.0/N2).ToArray();
+            var state2 = prior2.Select(x => x).ToArray();
             // 予測
             for (var i = 0; i < _series.Length - 1; i++)
             {
@@ -153,7 +153,7 @@ namespace Detector
                 var sum = state2.Sum();
                 for (var j = 0; j < N2; j++) state2[j] = sum < 1e-12 ? 1.0/N2 : state2[j]/sum;
                 var prediction = membership12.Mul(probabilities2.Mul(state2));
-                _mutualInformations[i + 1] = Entropy(_frequencies) - Entropy(prediction);
+                _mutualInformations[i + 1] = Entropy(prior1) - Entropy(prediction);
                 _predictedSeries[i + 1] = prediction.ToList().IndexOf(prediction.Max());
                 //var m = probabilities1.Mul(state1).ToList();
                 //_predictedSeries2[i + 1] = m.IndexOf(m.Max());
