@@ -19,7 +19,8 @@ namespace Detector.Tests
                 var data = dr.GetLines();
                 detector.Initialize(data);
             }
-            detector.Detect();
+            detector.Learn();
+            detector.Predict();
         }
     }
 }
