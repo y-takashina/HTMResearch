@@ -12,6 +12,7 @@ namespace Detector
         private double[] _samplePoints;
         private int[] _series;
         private int[] _predictedSeries;
+        private double[] _errorSeries;
         private double[] _mutualInformations;
         private const int N1 = 32;
         private const int N2 = 8;
@@ -22,6 +23,7 @@ namespace Detector
             _samplePoints = Sampling.CalcSamplePoints(rawData, N1);
             _series = new int[rawData.Length];
             _predictedSeries = new int[rawData.Length];
+            _errorSeries = new double[rawData.Length];
             _mutualInformations = new double[rawData.Length];
             for (var i = 0; i < rawData.Length; i++)
             {
@@ -152,6 +154,8 @@ namespace Detector
                 var sum = state2.Sum();
                 for (var j = 0; j < N2; j++) state2[j] = sum < 1e-12 ? 1.0/N2 : state2[j]/sum;
                 var prediction = membership12.Mul(probabilities2.Mul(state2));
+                var error = -Math.Log(prediction[_series[i + 1]], 2);
+                _errorSeries[i + 1] = double.IsPositiveInfinity(error) ? 100 : error;
                 _predictedSeries[i + 1] = prediction.ToList().IndexOf(prediction.Max());
                 _mutualInformations[i + 1] = Entropy(prior1) - Entropy(prediction);
             }
@@ -192,8 +196,9 @@ namespace Detector
             SaveMatrixImage(probabilities3, "layer3_probabilities");
             SaveMatrixImage(distances3Mean, "layer3_distances_mean", threshold: 1, bgWhite: false);
             SaveMatrixImage(distances3Min, "layer3_distances_min", threshold: 1, bgWhite: false);
-            ChartExtensions.CreateChart(_series.Select(i => _samplePoints[i]).ToArray(), _predictedSeries.Select(i => _samplePoints[i]).ToArray()).SaveImage("prediction");
+            ChartExtensions.CreateChart(_series.Select(i => _samplePoints[i]).ToArray()).SaveImage("prediction");
             ChartExtensions.CreateChart(_mutualInformations).SaveImage("mutual_information");
+            ChartExtensions.CreateChart(_errorSeries).SaveImage("error");
         }
     }
 }
