@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MoreLinq;
 using PipExtensions;
 
 namespace Detector
@@ -20,6 +21,31 @@ namespace Detector
             points[0] = average + 4*stddev;
             points[n - 1] = average - 4*stddev;
             return points;
+        }
+
+        public static double[] KMeansSampling(double[] data, int n)
+        {
+            var rand = new Random();
+            var means = data.OrderBy(v => rand.Next()).Take(n).ToArray();
+
+            while (true)
+            {
+                var prevMeans = means.Select(v => v).ToArray();
+                var assignments = CalcAssignments(data, means);
+                means = CalcMeans(data, assignments, n);
+                if (!Enumerable.Range(0, n).Any(i => Math.Abs(means[i] - prevMeans[i]) > 1e-6)) break;
+            }
+            return means;
+        }
+
+        private static int[] CalcAssignments(double[] data, double[] means)
+        {
+            return data.Select(v => means.ToList().IndexOf(means.MinBy(m => Math.Abs(v - m)))).ToArray();
+        }
+
+        private static double[] CalcMeans(double[] data, int[] assignments, int n)
+        {
+            return Enumerable.Range(0, n).Select(i => data.Where((v, j) => i == assignments[j]).Average()).ToArray();
         }
     }
 }
