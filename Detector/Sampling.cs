@@ -45,7 +45,7 @@ namespace Detector
 
         private static double[] CalcMeans(double[] data, int[] assignments, int n)
         {
-            return Enumerable.Range(0, n).Select(i => data.Where((v, j) => i == assignments[j]).Average()).ToArray();
+            return Enumerable.Range(0, n).Select(i => data.Where((v, j) => i == assignments[j]).DefaultIfEmpty().Average()).ToArray();
         }
     }
 }
