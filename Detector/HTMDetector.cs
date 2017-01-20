@@ -85,7 +85,7 @@ namespace Detector
                 var sum = cluster1Members[k].Count();
                 for (var j = 0; j < N1; j++)
                 {
-                    _membership12[j, k] = cluster1Members[k].Contains(j) ? 1.0/sum : 1e-6;
+                    _membership12[j, k] = cluster1Members[k].Contains(j) ? 1.0/sum : 0;
                 }
             }
             // Level 2
@@ -106,7 +106,7 @@ namespace Detector
                 var sum = cluster2Members[k].Count();
                 for (var j = 0; j < N2; j++)
                 {
-                    _membership23[j, k] = cluster2Members[k].Contains(j) ? 1.0/sum : 1e-6;
+                    _membership23[j, k] = cluster2Members[k].Contains(j) ? 1.0/sum : 0;
                 }
             }
             // Level 3
@@ -195,7 +195,7 @@ namespace Detector
             SaveMatrixImage(_probabilities3, path + "layer3_probabilities");
             SaveMatrixImage(_distances3Mean, path + "layer3_distances_mean", threshold: double.MaxValue, bgWhite: false);
             SaveMatrixImage(_distances3Min, path + "layer3_distances_min", threshold: double.MaxValue, bgWhite: false);
-            ChartExtensions.CreateChart(_series.Select(i => _samplePoints[i]).ToArray()).SaveImage(path + "prediction");
+            ChartExtensions.CreateChart(_series.Select(i => _samplePoints[i]).ToArray()).SaveImage(path + "original");
             ChartExtensions.CreateChart(_errorSeries).SaveImage(path + "error");
             ChartExtensions.CreateChart(_errorSeries2).SaveImage(path + "error2");
         }
