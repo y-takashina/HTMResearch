@@ -54,6 +54,7 @@
     <Compile Include="Clustering.cs" />
     <Compile Include="DataReader.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="FuzzyCMeansClustering.cs" />
     <Compile Include="HTMDetector.cs" />
     <Compile Include="Metrics.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
