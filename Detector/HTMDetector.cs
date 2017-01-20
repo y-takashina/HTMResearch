@@ -1,9 +1,9 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using PipExtensions;
 using RakuChart;
 using static MatViz.MatViz;
-using static PipExtensions.PipExtensions;
 
 namespace Detector
 {
@@ -13,14 +13,25 @@ namespace Detector
         private int[] _series;
         private int[] _predictedSeries;
         private double[] _errorSeries;
-        private double[] _mutualInformations;
+        private double[] _errorSeries2;
         // 遷移確率行列
+        // Level 1
+        private readonly double[,] _transitions1 = new double[N1, N1];
         private double[,] _probabilities1 = new double[N1, N1];
+        private readonly double[,] _distances1Mean = new double[N1, N1];
+        private readonly double[,] _distances1Min = new double[N1, N1];
+        // Level 2
         private double[,] _probabilities2 = new double[N2, N2];
+        private readonly double[,] _distances2Mean = new double[N2, N2];
+        private readonly double[,] _distances2Min = new double[N2, N2];
+        // Level 3
         private double[,] _probabilities3 = new double[N3, N3];
+        private readonly double[,] _distances3Mean = new double[N3, N3];
+        private readonly double[,] _distances3Min = new double[N3, N3];
         // 帰属度行列
         private readonly double[,] _membership12 = new double[N1, N2];
         private readonly double[,] _membership23 = new double[N2, N3];
+        // 各階層におけるクラスタ数
         private const int N1 = 32;
         private const int N2 = 8;
         private const int N3 = 4;
@@ -29,9 +40,6 @@ namespace Detector
         {
             _samplePoints = Sampling.KMeansSampling(rawData, N1);
             _series = new int[rawData.Length];
-            _predictedSeries = new int[rawData.Length];
-            _errorSeries = new double[rawData.Length];
-            _mutualInformations = new double[rawData.Length];
             for (var i = 0; i < rawData.Length; i++)
             {
                 var min = double.MaxValue;
@@ -49,43 +57,35 @@ namespace Detector
             }
         }
 
+        /// <summary>
+        /// 学習
+        /// </summary>
         public void Learn()
         {
-            // Level 1
-            var transitions1 = new double[N1, N1];
-            var distances1Mean = new double[N1, N1];
-            var distances1Min = new double[N1, N1];
-            // Level 2
-            var distances2Mean = new double[N2, N2];
-            var distances2Min = new double[N2, N2];
-            // Level 3
-            var distances3Mean = new double[N3, N3];
-            var distances3Min = new double[N3, N3];
-
-            // 学習
-            // Level 1
+            // 遷移のカウント
             for (var i = 0; i < _series.Length/2; i++)
             {
-                transitions1[_series[i], _series[i + 1]] += 1;
+                _transitions1[_series[i], _series[i + 1]] += 1;
             }
-            _probabilities1 = transitions1.NormalizeToRaw();
+            // Level 1
+            _probabilities1 = _transitions1.NormalizeToRaw();
             for (var j = 0; j < N1; j++)
             {
                 for (var k = 0; k < N1; k++)
                 {
-                    distances1Mean[j, k] = 1 - (_probabilities1[j, k] + _probabilities1[k, j])/2;
-                    distances1Min[j, k] = 1 - Math.Max(_probabilities1[j, k], _probabilities1[k, j]);
+                    _distances1Mean[j, k] = 1 - (_probabilities1[j, k] + _probabilities1[k, j])/2;
+                    _distances1Min[j, k] = 1 - Math.Max(_probabilities1[j, k], _probabilities1[k, j]);
                 }
             }
             // Level 1 の Level 2 に対する帰属度
-            var cluster1 = Clustering.AggregativeHierarchicalClustering(Enumerable.Range(0, N1).ToArray(), (j, k) => distances1Mean[j, k], Metrics.GroupAverage);
+            var cluster1 = Clustering.AggregativeHierarchicalClustering(Enumerable.Range(0, N1).ToArray(), (j, k) => _distances1Mean[j, k], Metrics.GroupAverage);
             var cluster1Members = cluster1.Extract(N2).Select(c => c.GetMembers().Select(s => s.Value)).ToArray();
-            for (var j = 0; j < N1; j++)
+            for (var k = 0; k < N2; k++)
             {
-                for (var k = 0; k < N2; k++)
+                var sum = cluster1Members[k].Count();
+                for (var j = 0; j < N1; j++)
                 {
-                    var sum = cluster1Members[k].Count();
-                    _membership12[j, k] = cluster1Members[k].Contains(j) ? 1.0/sum : 0;
+                    _membership12[j, k] = cluster1Members[k].Contains(j) ? 1.0/sum : 1e-6;
                 }
             }
             // Level 2
@@ -94,19 +94,19 @@ namespace Detector
             {
                 for (var k = 0; k < N2; k++)
                 {
-                    distances2Mean[j, k] = 1 - (_probabilities2[j, k] + _probabilities2[k, j])/2;
-                    distances2Min[j, k] = 1 - Math.Max(_probabilities2[j, k], _probabilities2[k, j]);
+                    _distances2Mean[j, k] = 1 - (_probabilities2[j, k] + _probabilities2[k, j])/2;
+                    _distances2Min[j, k] = 1 - Math.Max(_probabilities2[j, k], _probabilities2[k, j]);
                 }
             }
             // Level 2 の Level 3 に対する帰属度
-            var cluster2 = Clustering.AggregativeHierarchicalClustering(Enumerable.Range(0, N2).ToArray(), (j, k) => distances2Mean[j, k], Metrics.GroupAverage);
+            var cluster2 = Clustering.AggregativeHierarchicalClustering(Enumerable.Range(0, N2).ToArray(), (j, k) => _distances2Mean[j, k], Metrics.GroupAverage);
             var cluster2Members = cluster2.Extract(N3).Select(c => c.GetMembers().Select(s => s.Value)).ToArray();
             for (var k = 0; k < N3; k++)
             {
                 var sum = cluster2Members[k].Count();
                 for (var j = 0; j < N2; j++)
                 {
-                    _membership23[j, k] = cluster2Members[k].Contains(j) ? 1.0/sum : 0;
+                    _membership23[j, k] = cluster2Members[k].Contains(j) ? 1.0/sum : 1e-6;
                 }
             }
             // Level 3
@@ -115,29 +115,24 @@ namespace Detector
             {
                 for (var k = 0; k < N3; k++)
                 {
-                    distances3Mean[j, k] = 1 - (_probabilities3[j, k] + _probabilities3[k, j])/2;
-                    distances3Min[j, k] = 1 - Math.Max(_probabilities3[j, k], _probabilities3[k, j]);
+                    _distances3Mean[j, k] = 1 - (_probabilities3[j, k] + _probabilities3[k, j])/2;
+                    _distances3Min[j, k] = 1 - Math.Max(_probabilities3[j, k], _probabilities3[k, j]);
                 }
             }
-            SaveMatrixImage(transitions1, "layer1_transitions");
-            SaveMatrixImage(_probabilities1, "layer1_probabilities");
-            SaveMatrixImage(distances1Mean, "layer1_distances_mean", threshold: double.MaxValue, bgWhite: false);
-            SaveMatrixImage(distances1Min, "layer1_distances_min", threshold: double.MaxValue, bgWhite: false);
-            SaveMatrixImage(_membership12, "layer12_membership");
-            SaveMatrixImage(_probabilities2, "layer2_probabilities");
-            SaveMatrixImage(distances2Mean, "layer2_distances_mean", threshold: double.MaxValue, bgWhite: false);
-            SaveMatrixImage(distances2Min, "layer2_distances_min", threshold: double.MaxValue, bgWhite: false);
-            SaveMatrixImage(_membership23, "layer23_membership");
-            SaveMatrixImage(_probabilities3, "layer3_probabilities");
-            SaveMatrixImage(distances3Mean, "layer3_distances_mean", threshold: 1, bgWhite: false);
-            SaveMatrixImage(distances3Min, "layer3_distances_min", threshold: 1, bgWhite: false);
         }
 
+        /// <summary>
+        /// 予測
+        /// </summary>
         public void Predict()
         {
+            _predictedSeries = new int[_series.Length];
+            _errorSeries = new double[_series.Length];
+            _errorSeries2 = new double[_series.Length];
             // 事前分布
             var prior1 = Enumerable.Range(0, N1).Select(i => 1.0/N1).ToArray();
             var prior2 = Enumerable.Range(0, N2).Select(i => 1.0/N2).ToArray();
+            var frequencies = Enumerable.Range(0, N1).Select(i => (double) _series.Take(_series.Length/2).Count(v => v == i)/_series.Length*2).ToArray();
             // 予測
             for (var i = 0; i < _series.Length - 1; i++)
             {
@@ -152,8 +147,9 @@ namespace Detector
                 var prediction = _membership12.Mul(_probabilities2.Mul(state2));
                 var error = -Math.Log(prediction[_series[i + 1]], 2);
                 _errorSeries[i + 1] = double.IsPositiveInfinity(error) ? 100 : error;
+                var error2 = -Math.Log(frequencies[_series[i + 1]], 2);
+                _errorSeries2[i + 1] = double.IsPositiveInfinity(error2) ? 100 : error2;
                 _predictedSeries[i + 1] = prediction.ToList().IndexOf(prediction.Max());
-                _mutualInformations[i + 1] = Entropy(prior1) - Entropy(prediction);
             }
             //_mutualInformations.ForEach(v => Console.Write(v.ToString("F4") + "\n"));
             //var g1 = _membership12.Mul(_membership23.Mul(new double[] {1, 0, 0, 0}));
@@ -178,9 +174,30 @@ namespace Detector
             //_membership12 = _membership12.OrderRaws(cluster1Order);
             //c1.Extract(N2).Select(c => c.GetMembers()).ForEach((singles, idx) => Console.WriteLine(idx + ": " + singles.Select(s => s.Value).Concatenate()));
             //cluster1Order.ForEach(x => Console.Write(x + ", "));
-            ChartExtensions.CreateChart(_series.Select(i => _samplePoints[i]).ToArray()).SaveImage("prediction");
-            ChartExtensions.CreateChart(_mutualInformations).SaveImage("mutual_information");
-            ChartExtensions.CreateChart(_errorSeries).SaveImage("error");
+        }
+
+        /// <summary>
+        /// 結果の保存
+        /// </summary>
+        public void SaveResultImages(string path = ".")
+        {
+            Directory.CreateDirectory(path);
+            path += '\\';
+            SaveMatrixImage(_transitions1, path + "layer1_transitions");
+            SaveMatrixImage(_probabilities1, path + "layer1_probabilities");
+            SaveMatrixImage(_distances1Mean, path + "layer1_distances_mean", threshold: double.MaxValue, bgWhite: false);
+            SaveMatrixImage(_distances1Min, path + "layer1_distances_min", threshold: double.MaxValue, bgWhite: false);
+            SaveMatrixImage(_membership12, path + "layer12_membership");
+            SaveMatrixImage(_probabilities2, path + "layer2_probabilities");
+            SaveMatrixImage(_distances2Mean, path + "layer2_distances_mean", threshold: double.MaxValue, bgWhite: false);
+            SaveMatrixImage(_distances2Min, path + "layer2_distances_min", threshold: double.MaxValue, bgWhite: false);
+            SaveMatrixImage(_membership23, path + "layer23_membership");
+            SaveMatrixImage(_probabilities3, path + "layer3_probabilities");
+            SaveMatrixImage(_distances3Mean, path + "layer3_distances_mean", threshold: double.MaxValue, bgWhite: false);
+            SaveMatrixImage(_distances3Min, path + "layer3_distances_min", threshold: double.MaxValue, bgWhite: false);
+            ChartExtensions.CreateChart(_series.Select(i => _samplePoints[i]).ToArray()).SaveImage(path + "prediction");
+            ChartExtensions.CreateChart(_errorSeries).SaveImage(path + "error");
+            ChartExtensions.CreateChart(_errorSeries2).SaveImage(path + "error2");
         }
     }
 }
