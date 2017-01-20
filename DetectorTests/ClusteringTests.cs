@@ -123,5 +123,13 @@ namespace Detector.Tests
         public void AggregativeHierarchicalClusteringTest()
         {
         }
+
+        [TestMethod()]
+        public void FuzzyCMeansClusteringTest()
+        {
+            var data = new double[] {0, 1, 2, 3, 4, 5, 7, 8, 9, 20};
+            var assignments = FuzzyCMeansClustering(data, 3);
+            MatViz.MatViz.SaveMatrixImage(assignments, "assignments");
+        }
     }
 }

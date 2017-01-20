@@ -72,7 +72,7 @@ namespace Detector
         }
     }
 
-    public static class Clustering
+    public static partial class Clustering
     {
         public static Single Cluster(int value)
         {

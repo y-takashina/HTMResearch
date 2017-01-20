@@ -1,4 +1,7 @@
 ﻿using System;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using Detector;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -10,17 +13,32 @@ namespace Detector.Tests
         [TestMethod()]
         public void DetectTest()
         {
-            var detector = new HTMDetector();
-            //using (var dr = new DataReader(@"..\data\realAWSCloudwatch\grok_asg_anomaly.csv"))
-            using (var dr = new DataReader(@"..\data\artificialWithAnomaly\art_daily_jumpsdown.csv"))
-            //using (var dr = new DataReader(@"..\data\artificialWithAnomaly\art_load_balancer_spikes.csv"))
-            //using (var dr = new DataReader(@"..\data\realAWSCloudwatch\ec2_cpu_utilization_5f5533.csv"))
+            var files = new DirectoryInfo(@"..\data").GetDirectories().SelectMany(dir => dir.GetFiles()).Select(f => f.FullName);
+            Parallel.ForEach(files, file =>
             {
-                var data = dr.GetLines();
-                detector.Initialize(data);
-            }
-            detector.Learn();
-            detector.Predict();
+                var detector = new HTMDetector();
+                using (var dr = new DataReader(file))
+                {
+                    var data = dr.GetLines();
+                    detector.Initialize(data);
+                }
+                detector.Learn();
+                detector.Predict();
+                detector.SaveResultImages("results\\" + file.Split('\\').Last().Split('.').First());
+            });
+            //var path = @"..\data\realAWSCloudwatch\grok_asg_anomaly.csv";
+            //var path = @"..\data\artificialWithAnomaly\art_daily_jumpsdown.csv";
+            //var path = @"..\data\artificialWithAnomaly\art_load_balancer_spikes.csv";
+            //var path = @"..\data\realAWSCloudwatch\ec2_cpu_utilization_5f5533.csv";
+//            var detector = new HTMDetector();
+//            using (var dr = new DataReader(path))
+//            {
+//                var data = dr.GetLines();
+//                detector.Initialize(data);
+//            }
+//            detector.Learn();
+//            detector.Predict();
+//            detector.SaveResultImages(path.Split('\\').Last().Split('.').First());
         }
     }
 }

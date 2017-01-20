@@ -61,6 +61,10 @@
       <Project>{73B9A6D8-C6ED-4AF9-9256-ED01595754DE}</Project>
       <Name>Detector</Name>
     </ProjectReference>
+    <ProjectReference Include="..\MatViz\MatViz.csproj">
+      <Project>{B6F077BC-DAD9-4FF2-B831-1C79BA2E790B}</Project>
+      <Name>MatViz</Name>
+    </ProjectReference>
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
