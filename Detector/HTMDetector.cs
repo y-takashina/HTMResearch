@@ -14,7 +14,7 @@ namespace Detector
         private int[] _predictedSeries;
         private double[] _errorSeries;
         private double[] _errorSeries2;
-        // 遷移確率行列
+        // 遷移確率行列、距離行列
         // Level 1
         private readonly double[,] _transitions1 = new double[N1, N1];
         private double[,] _probabilities1 = new double[N1, N1];
@@ -57,9 +57,6 @@ namespace Detector
             }
         }
 
-        /// <summary>
-        /// 学習
-        /// </summary>
         public void Learn()
         {
             // 遷移のカウント
@@ -85,7 +82,7 @@ namespace Detector
                 var sum = cluster1Members[k].Count();
                 for (var j = 0; j < N1; j++)
                 {
-                    _membership12[j, k] = cluster1Members[k].Contains(j) ? 1.0/sum : 0;
+                    _membership12[j, k] = cluster1Members[k].Contains(j) ? 1.0/sum : 1e-6;
                 }
             }
             // Level 2
@@ -110,7 +107,7 @@ namespace Detector
                 }
             }
             // Level 3
-            _probabilities3 = _membership23.PseudoInverse().Mul(_probabilities2).Mul(_membership23);
+            _probabilities3 = _membership23.PseudoInverse().Mul(_probabilities2).Mul(_membership23).NormalizeToRaw();
             for (var j = 0; j < N3; j++)
             {
                 for (var k = 0; k < N3; k++)
@@ -121,33 +118,29 @@ namespace Detector
             }
         }
 
-        /// <summary>
-        /// 予測
-        /// </summary>
         public void Predict()
         {
             _predictedSeries = new int[_series.Length];
             _errorSeries = new double[_series.Length];
             _errorSeries2 = new double[_series.Length];
             // 事前分布
-            var prior1 = Enumerable.Range(0, N1).Select(i => 1.0/N1).ToArray();
-            var prior2 = Enumerable.Range(0, N2).Select(i => 1.0/N2).ToArray();
-            var frequencies = Enumerable.Range(0, N1).Select(i => (double) _series.Take(_series.Length/2).Count(v => v == i)/_series.Length*2).ToArray();
+            var prior1 = Enumerable.Range(0, N1).Select(i => (double) _series.Take(_series.Length/2).Count(v => v == i)/_series.Length*2).ToArray();
+            var prior2 = _membership12.T().Mul(prior1);
+            var state2 = prior2.Select(x => x).ToArray();
             // 予測
             for (var i = 0; i < _series.Length - 1; i++)
             {
                 // 状態
                 var state1 = Enumerable.Range(0, N1).Select(j => j == _series[i] ? 1.0 : 0.0).ToArray();
-                var state2 = prior2.Select(x => x).ToArray();
                 var message1 = _membership12.T().Mul(state1);
                 var message2 = _probabilities2.Mul(state2);
                 for (var j = 0; j < N2; j++) state2[j] = message1[j]*message2[j];
                 var sum = state2.Sum();
-                for (var j = 0; j < N2; j++) state2[j] = sum < 1e-12 ? 1.0/N2 : state2[j]/sum;
+                for (var j = 0; j < N2; j++) state2[j] = sum < 1e-300 ? prior2[j] : state2[j]/sum;
                 var prediction = _membership12.Mul(_probabilities2.Mul(state2));
                 var error = -Math.Log(prediction[_series[i + 1]], 2);
                 _errorSeries[i + 1] = double.IsPositiveInfinity(error) ? 100 : error;
-                var error2 = -Math.Log(frequencies[_series[i + 1]], 2);
+                var error2 = -Math.Log(prior1[_series[i + 1]], 2);
                 _errorSeries2[i + 1] = double.IsPositiveInfinity(error2) ? 100 : error2;
                 _predictedSeries[i + 1] = prediction.ToList().IndexOf(prediction.Max());
             }
@@ -176,9 +169,6 @@ namespace Detector
             //cluster1Order.ForEach(x => Console.Write(x + ", "));
         }
 
-        /// <summary>
-        /// 結果の保存
-        /// </summary>
         public void SaveResultImages(string path = ".")
         {
             Directory.CreateDirectory(path);
