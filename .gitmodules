@@ -10,3 +10,6 @@
 [submodule "RakuChart"]
 	path = RakuChart
 	url = https://github.com/y-takashina/RakuChart.git
+[submodule "Clustering"]
+	path = Clustering
+	url = https://github.com/y-takashina/Clustering.git
