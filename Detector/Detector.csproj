@@ -51,16 +51,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Clustering.cs" />
     <Compile Include="DataReader.cs" />
     <Compile Include="Extensions.cs" />
-    <Compile Include="FuzzyCMeansClustering.cs" />
     <Compile Include="HTMDetector.cs" />
-    <Compile Include="Metrics.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Sampling.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Clustering\Clustering.csproj">
+      <Project>{81EBDB49-BC50-4793-AC4F-BE0C24072329}</Project>
+      <Name>Clustering</Name>
+    </ProjectReference>
     <ProjectReference Include="..\MatViz\MatViz.csproj">
       <Project>{B6F077BC-DAD9-4FF2-B831-1C79BA2E790B}</Project>
       <Name>MatViz</Name>
