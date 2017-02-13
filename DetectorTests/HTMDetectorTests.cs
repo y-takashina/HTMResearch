@@ -14,6 +14,7 @@ namespace Detector.Tests
         public void DetectTest()
         {
             var files = new DirectoryInfo(@"..\data").GetDirectories().SelectMany(dir => dir.GetFiles()).Select(f => f.FullName);
+            if (!files.Any()) throw new Exception("Data is empty!");
             Parallel.ForEach(files, file =>
             {
                 var detector = new HTMDetector();
