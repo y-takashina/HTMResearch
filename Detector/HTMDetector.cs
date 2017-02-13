@@ -4,7 +4,6 @@ using System.Linq;
 using PipExtensions;
 using RakuChart;
 using Clustering;
-using static Clustering.Clustering;
 using static MatViz.MatViz;
 
 namespace Detector
