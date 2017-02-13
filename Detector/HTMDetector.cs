@@ -4,7 +4,6 @@ using System.Linq;
 using PipExtensions;
 using RakuChart;
 using Clustering;
-using static Clustering.Clustering;
 using static MatViz.MatViz;
 
 namespace Detector
@@ -77,7 +76,7 @@ namespace Detector
                 }
             }
             // Level 1 の Level 2 に対する帰属度
-            var cluster1 = AggregativeHierarchicalClustering(Enumerable.Range(0, N1).ToArray(), (j, k) => _distances1Mean[j, k], Metrics.GroupAverage);
+            var cluster1 = Clustering.Clustering.AggregativeHierarchicalClustering(Enumerable.Range(0, N1).ToArray(), (j, k) => _distances1Mean[j, k], Metrics.GroupAverage);
             var cluster1Members = cluster1.Extract(N2).Select(c => c.GetMembers().Select(s => s.Value)).ToArray();
             for (var k = 0; k < N2; k++)
             {
@@ -98,7 +97,7 @@ namespace Detector
                 }
             }
             // Level 2 の Level 3 に対する帰属度
-            var cluster2 = AggregativeHierarchicalClustering(Enumerable.Range(0, N2).ToArray(), (j, k) => _distances2Mean[j, k], Metrics.GroupAverage);
+            var cluster2 = Clustering.Clustering.AggregativeHierarchicalClustering(Enumerable.Range(0, N2).ToArray(), (j, k) => _distances2Mean[j, k], Metrics.GroupAverage);
             var cluster2Members = cluster2.Extract(N3).Select(c => c.GetMembers().Select(s => s.Value)).ToArray();
             for (var k = 0; k < N3; k++)
             {
