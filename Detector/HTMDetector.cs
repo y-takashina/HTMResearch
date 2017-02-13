@@ -145,19 +145,6 @@ namespace Detector
                 _errorSeries2[i + 1] = double.IsPositiveInfinity(error2) ? 100 : error2;
                 _predictedSeries[i + 1] = prediction.ToList().IndexOf(prediction.Max());
             }
-            //_mutualInformations.ForEach(v => Console.Write(v.ToString("F4") + "\n"));
-            //var g1 = _membership12.Mul(_membership23.Mul(new double[] {1, 0, 0, 0}));
-            //var g2 = _membership12.Mul(_membership23.Mul(new double[] {0, 1, 0, 0}));
-            //var g3 = _membership12.Mul(_membership23.Mul(new double[] {0, 0, 1, 0}));
-            //var g4 = _membership12.Mul(_membership23.Mul(new double[] {0, 0, 0, 1}));
-            //g1.ForEach((p, i) => { if (Math.Abs(p - 1) < 1e-6) Console.Write(_samplePoints[i] + ", "); });
-            //Console.WriteLine();
-            //g2.ForEach((p, i) => { if (Math.Abs(p - 1) < 1e-6) Console.Write(_samplePoints[i] + ", "); });
-            //Console.WriteLine();
-            //g3.ForEach((p, i) => { if (Math.Abs(p - 1) < 1e-6) Console.Write(_samplePoints[i] + ", "); });
-            //Console.WriteLine();
-            //g4.ForEach((p, i) => { if (Math.Abs(p - 1) < 1e-6) Console.Write(_samplePoints[i] + ", "); });
-            //Console.WriteLine();
             // 並べ替えて表示云々
             //var c1 = Clustering.AggregativeHierarchicalClusteringByName(Enumerable.Range(0, N1).ToArray(), (j, k) => distances1Mean[j, k], Clustering.AHCType.GroupAverage);
             //var cluster1Order = c1.Extract(N2).Select(c => c.GetMembers().Select(s => s.Value)).SelectMany(i => i).ToArray();
