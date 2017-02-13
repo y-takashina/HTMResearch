@@ -12,9 +12,8 @@ namespace Detector
     {
         private double[] _samplePoints;
         private int[] _series;
-        private int[] _predictedSeries;
-        private double[] _errorSeries;
-        private double[] _errorSeries2;
+        private double[] _predictionEntropySeriesHTM;
+        private double[] _predictionEntropySeriesFreq;
         // 遷移確率行列、距離行列
         // Level 1
         private readonly double[,] _transitions1 = new double[N1, N1];
@@ -22,6 +21,7 @@ namespace Detector
         private readonly double[,] _distances1Mean = new double[N1, N1];
         private readonly double[,] _distances1Min = new double[N1, N1];
         // Level 2
+        private readonly double[,] _transitions2 = new double[N2, N2];
         private double[,] _probabilities2 = new double[N2, N2];
         private readonly double[,] _distances2Mean = new double[N2, N2];
         private readonly double[,] _distances2Min = new double[N2, N2];
@@ -39,7 +39,7 @@ namespace Detector
 
         public void Initialize(double[] rawData)
         {
-            _samplePoints = Sampling.KMeansSampling(rawData, N1);
+            _samplePoints = Sampling.CalcSamplePoints(rawData, N1);
             _series = new int[rawData.Length];
             for (var i = 0; i < rawData.Length; i++)
             {
@@ -83,11 +83,23 @@ namespace Detector
                 var sum = cluster1Members[k].Count();
                 for (var j = 0; j < N1; j++)
                 {
-                    _membership12[j, k] = cluster1Members[k].Contains(j) ? 1.0/sum : 1e-6;
+                    _membership12[j, k] = cluster1Members[k].Contains(j) ? 1.0 : 1e-6;
                 }
             }
             // Level 2
-            _probabilities2 = _membership12.PseudoInverse().Mul(_probabilities1).Mul(_membership12);
+            for (var i = 0; i < _series.Length - 2; i++)
+            {
+                // cluster1membersを使う
+                int from2 = -1, to2 = -1;
+                for (var j = 0; j < N2; j++)
+                {
+                    if (1 - _membership12[_series[i], j] < 1e-6) from2 = j;
+                    if (1 - _membership12[_series[i + 1], j] < 1e-6) to2 = j;
+                }
+                _transitions2[from2, to2] += 1;
+            }
+            _probabilities2 = _transitions2.NormalizeToRaw();
+//            _probabilities2 = _membership12.PseudoInverse().Mul(_probabilities1).Mul(_membership12);
             for (var j = 0; j < N2; j++)
             {
                 for (var k = 0; k < N2; k++)
@@ -104,7 +116,7 @@ namespace Detector
                 var sum = cluster2Members[k].Count();
                 for (var j = 0; j < N2; j++)
                 {
-                    _membership23[j, k] = cluster2Members[k].Contains(j) ? 1.0/sum : 0;
+                    _membership23[j, k] = cluster2Members[k].Contains(j) ? 1.0 : 1e-6;
                 }
             }
             // Level 3
@@ -121,43 +133,27 @@ namespace Detector
 
         public void Predict()
         {
-            _predictedSeries = new int[_series.Length];
-            _errorSeries = new double[_series.Length];
-            _errorSeries2 = new double[_series.Length];
+            _predictionEntropySeriesHTM = new double[_series.Length];
+            _predictionEntropySeriesFreq = new double[_series.Length];
             // 事前分布
             var prior1 = Enumerable.Range(0, N1).Select(i => (double) _series.Take(_series.Length/2).Count(v => v == i)/_series.Length*2).ToArray();
+            for (var i = 0; i < prior1.Length; i++) if (prior1[i] < 1e-6) prior1[i] = 1e-6;
             var prior2 = _membership12.T().Mul(prior1);
             var state2 = prior2.Select(x => x).ToArray();
             // 予測
-            for (var i = 0; i < _series.Length - 1; i++)
+            for (var i = _series.Length/2; i < _series.Length - 1; i++)
             {
                 // 状態
-                var state1 = Enumerable.Range(0, N1).Select(j => j == _series[i] ? 1.0 : 0.0).ToArray();
+                var state1 = Enumerable.Range(0, N1).Select(j => j == _series[i] ? 1.0 : 1e-6).ToArray();
                 var message1 = _membership12.T().Mul(state1);
                 var message2 = _probabilities2.Mul(state2);
                 for (var j = 0; j < N2; j++) state2[j] = message1[j]*message2[j];
                 var sum = state2.Sum();
-                for (var j = 0; j < N2; j++) state2[j] = sum < 1e-300 ? prior2[j] : state2[j]/sum;
+                for (var j = 0; j < N2; j++) state2[j] = state2[j]/sum;
                 var prediction = _membership12.Mul(_probabilities2.Mul(state2));
-                var error = -Math.Log(prediction[_series[i + 1]], 2);
-                _errorSeries[i + 1] = double.IsPositiveInfinity(error) ? 100 : error;
-                var error2 = -Math.Log(prior1[_series[i + 1]], 2);
-                _errorSeries2[i + 1] = double.IsPositiveInfinity(error2) ? 100 : error2;
-                _predictedSeries[i + 1] = prediction.ToList().IndexOf(prediction.Max());
+                _predictionEntropySeriesHTM[i + 1] = -Math.Log(prediction[_series[i + 1]], 2);
+                _predictionEntropySeriesFreq[i + 1] = -Math.Log(prior1[_series[i + 1]], 2);
             }
-            //_mutualInformations.ForEach(v => Console.Write(v.ToString("F4") + "\n"));
-            //var g1 = _membership12.Mul(_membership23.Mul(new double[] {1, 0, 0, 0}));
-            //var g2 = _membership12.Mul(_membership23.Mul(new double[] {0, 1, 0, 0}));
-            //var g3 = _membership12.Mul(_membership23.Mul(new double[] {0, 0, 1, 0}));
-            //var g4 = _membership12.Mul(_membership23.Mul(new double[] {0, 0, 0, 1}));
-            //g1.ForEach((p, i) => { if (Math.Abs(p - 1) < 1e-6) Console.Write(_samplePoints[i] + ", "); });
-            //Console.WriteLine();
-            //g2.ForEach((p, i) => { if (Math.Abs(p - 1) < 1e-6) Console.Write(_samplePoints[i] + ", "); });
-            //Console.WriteLine();
-            //g3.ForEach((p, i) => { if (Math.Abs(p - 1) < 1e-6) Console.Write(_samplePoints[i] + ", "); });
-            //Console.WriteLine();
-            //g4.ForEach((p, i) => { if (Math.Abs(p - 1) < 1e-6) Console.Write(_samplePoints[i] + ", "); });
-            //Console.WriteLine();
             // 並べ替えて表示云々
             //var c1 = Clustering.AggregativeHierarchicalClusteringByName(Enumerable.Range(0, N1).ToArray(), (j, k) => distances1Mean[j, k], Clustering.AHCType.GroupAverage);
             //var cluster1Order = c1.Extract(N2).Select(c => c.GetMembers().Select(s => s.Value)).SelectMany(i => i).ToArray();
@@ -187,8 +183,8 @@ namespace Detector
             SaveMatrixImage(_distances3Mean, path + "layer3_distances_mean", threshold: double.MaxValue, bgWhite: false);
             SaveMatrixImage(_distances3Min, path + "layer3_distances_min", threshold: double.MaxValue, bgWhite: false);
             ChartExtensions.CreateChart(_series.Select(i => _samplePoints[i]).ToArray()).SaveImage(path + "original");
-            ChartExtensions.CreateChart(_errorSeries).SaveImage(path + "error");
-            ChartExtensions.CreateChart(_errorSeries2).SaveImage(path + "error2");
+            ChartExtensions.CreateChart(_predictionEntropySeriesHTM).SaveImage(path + "prediction_entropy_htm");
+            ChartExtensions.CreateChart(_predictionEntropySeriesFreq).SaveImage(path + "prediction_entropy_freq");
         }
     }
 }
