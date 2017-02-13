@@ -51,8 +51,6 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="ClusteringTests.cs" />
-    <Compile Include="ClusterTests.cs" />
     <Compile Include="HTMDetectorTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
