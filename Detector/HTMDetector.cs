@@ -18,17 +18,14 @@ namespace Detector
         // Level 1
         private readonly double[,] _transitions1 = new double[N1, N1];
         private double[,] _probabilities1 = new double[N1, N1];
-        private readonly double[,] _distances1Mean = new double[N1, N1];
-        private readonly double[,] _distances1Min = new double[N1, N1];
+        private readonly double[,] _distances1 = new double[N1, N1];
         // Level 2
         private readonly double[,] _transitions2 = new double[N2, N2];
         private double[,] _probabilities2 = new double[N2, N2];
-        private readonly double[,] _distances2Mean = new double[N2, N2];
-        private readonly double[,] _distances2Min = new double[N2, N2];
+        private readonly double[,] _distances2 = new double[N2, N2];
         // Level 3
         private double[,] _probabilities3 = new double[N3, N3];
-        private readonly double[,] _distances3Mean = new double[N3, N3];
-        private readonly double[,] _distances3Min = new double[N3, N3];
+        private readonly double[,] _distances3 = new double[N3, N3];
         // 帰属度行列
         private readonly double[,] _membership12 = new double[N1, N2];
         private readonly double[,] _membership23 = new double[N2, N3];
@@ -71,12 +68,11 @@ namespace Detector
             {
                 for (var k = 0; k < N1; k++)
                 {
-                    _distances1Mean[j, k] = 1 - (_probabilities1[j, k] + _probabilities1[k, j])/2;
-                    _distances1Min[j, k] = 1 - Math.Max(_probabilities1[j, k], _probabilities1[k, j]);
+                    _distances1[j, k] = 1 - (_probabilities1[j, k] + _probabilities1[k, j])/2;
                 }
             }
             // Level 1 の Level 2 に対する帰属度
-            var cluster1 = Clustering.Clustering.AggregativeHierarchicalClustering(Enumerable.Range(0, N1).ToArray(), (j, k) => _distances1Mean[j, k], Metrics.GroupAverage);
+            var cluster1 = Clustering.Clustering.AggregativeHierarchicalClustering(Enumerable.Range(0, N1).ToArray(), (j, k) => _distances1[j, k], Metrics.GroupAverage);
             var cluster1Members = cluster1.Extract(N2).Select(c => c.GetMembers().Select(s => s.Value)).ToArray();
             for (var k = 0; k < N2; k++)
             {
@@ -104,12 +100,11 @@ namespace Detector
             {
                 for (var k = 0; k < N2; k++)
                 {
-                    _distances2Mean[j, k] = 1 - (_probabilities2[j, k] + _probabilities2[k, j])/2;
-                    _distances2Min[j, k] = 1 - Math.Max(_probabilities2[j, k], _probabilities2[k, j]);
+                    _distances2[j, k] = 1 - (_probabilities2[j, k] + _probabilities2[k, j])/2;
                 }
             }
             // Level 2 の Level 3 に対する帰属度
-            var cluster2 = Clustering.Clustering.AggregativeHierarchicalClustering(Enumerable.Range(0, N2).ToArray(), (j, k) => _distances2Mean[j, k], Metrics.GroupAverage);
+            var cluster2 = Clustering.Clustering.AggregativeHierarchicalClustering(Enumerable.Range(0, N2).ToArray(), (j, k) => _distances2[j, k], Metrics.GroupAverage);
             var cluster2Members = cluster2.Extract(N3).Select(c => c.GetMembers().Select(s => s.Value)).ToArray();
             for (var k = 0; k < N3; k++)
             {
@@ -125,8 +120,7 @@ namespace Detector
             {
                 for (var k = 0; k < N3; k++)
                 {
-                    _distances3Mean[j, k] = 1 - (_probabilities3[j, k] + _probabilities3[k, j])/2;
-                    _distances3Min[j, k] = 1 - Math.Max(_probabilities3[j, k], _probabilities3[k, j]);
+                    _distances3[j, k] = 1 - (_probabilities3[j, k] + _probabilities3[k, j])/2;
                 }
             }
         }
@@ -172,16 +166,13 @@ namespace Detector
             path += '\\';
             SaveMatrixImage(_transitions1, path + "layer1_transitions");
             SaveMatrixImage(_probabilities1, path + "layer1_probabilities");
-            SaveMatrixImage(_distances1Mean, path + "layer1_distances_mean", threshold: double.MaxValue, bgWhite: false);
-            SaveMatrixImage(_distances1Min, path + "layer1_distances_min", threshold: double.MaxValue, bgWhite: false);
+            SaveMatrixImage(_distances1, path + "layer1_distances_mean", threshold: double.MaxValue, bgWhite: false);
             SaveMatrixImage(_membership12, path + "layer12_membership");
             SaveMatrixImage(_probabilities2, path + "layer2_probabilities");
-            SaveMatrixImage(_distances2Mean, path + "layer2_distances_mean", threshold: double.MaxValue, bgWhite: false);
-            SaveMatrixImage(_distances2Min, path + "layer2_distances_min", threshold: double.MaxValue, bgWhite: false);
+            SaveMatrixImage(_distances2, path + "layer2_distances_mean", threshold: double.MaxValue, bgWhite: false);
             SaveMatrixImage(_membership23, path + "layer23_membership");
             SaveMatrixImage(_probabilities3, path + "layer3_probabilities");
-            SaveMatrixImage(_distances3Mean, path + "layer3_distances_mean", threshold: double.MaxValue, bgWhite: false);
-            SaveMatrixImage(_distances3Min, path + "layer3_distances_min", threshold: double.MaxValue, bgWhite: false);
+            SaveMatrixImage(_distances3, path + "layer3_distances_mean", threshold: double.MaxValue, bgWhite: false);
             ChartExtensions.CreateChart(_series.Select(i => _samplePoints[i]).ToArray()).SaveImage(path + "original");
             ChartExtensions.CreateChart(_predictionEntropySeriesHTM).SaveImage(path + "prediction_entropy_htm");
             ChartExtensions.CreateChart(_predictionEntropySeriesFreq).SaveImage(path + "prediction_entropy_freq");
