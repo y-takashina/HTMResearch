@@ -10,16 +10,18 @@ namespace Detector
 {
     public static class Sampling
     {
-        public static double[] CalcSamplePoints(double[] data, int n)
+        public static double[] CalcSamplePoints(IEnumerable<double> data, int n, bool allowNaN = false)
         {
-            var average = data.Average();
-            var stddev = data.StandardDeviation();
+            var array = data.Where(v => !double.IsNaN(v)).ToArray();
+            var average = array.Average();
+            var stddev = array.StandardDeviation();
             var min = average - 3*stddev;
             var max = average + 3*stddev;
             var unit = (max - min)/n;
             var points = Enumerable.Range(0, n).Select(i => max - i*unit).ToArray();
             points[0] = average + 4*stddev;
             points[n - 1] = average - 4*stddev;
+            if (allowNaN) points[1] = double.NaN; // 修正すべき。
             return points;
         }
 
