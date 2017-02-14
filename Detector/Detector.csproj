@@ -55,6 +55,7 @@
     <Compile Include="Extensions.cs" />
     <Compile Include="HTMDetector.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RelationAnalyzer.cs" />
     <Compile Include="Sampling.cs" />
   </ItemGroup>
   <ItemGroup>
