@@ -11,10 +11,11 @@ namespace Detector
     public class DetectorForWaterTreatmentPlant
     {
         private readonly List<List<double>> _rawSeries = new List<List<double>>();
-        private readonly List<List<int>> _sampledSeriesSet = new List<List<int>>();
+        private readonly List<List<int>> _discretizedSeries = new List<List<int>>();
 
         public DetectorForWaterTreatmentPlant()
         {
+            // データ読み込み
             using (var sr = new StreamReader(@"..\data\water-treatment.csv"))
             {
                 while (!sr.EndOfStream)
@@ -28,29 +29,22 @@ namespace Detector
                     }
                 }
             }
-            var samplePointsSet = _rawSeries.Select(series => Sampling.CalcSamplePoints(series, 32, true).ToList()).ToList();
-            foreach (var samplePoints in samplePointsSet)
+            // 離散化
+            var discretizedValues = _rawSeries.Select(series => Sampling.CalcSamplePoints(series, 32, true).ToList()).ToList();
+            for (var i = 0; i < _rawSeries.Count; i++)
             {
-                foreach (var point in samplePoints)
+                var discretizedSeries = new List<int>();
+                foreach (var value in _rawSeries[i])
                 {
-                    Console.Write($@"{point}, ");
+                    var discretizedValue = double.IsNaN(value) ? value : discretizedValues[i].Where(v => !double.IsNaN(v)).MinBy(v => Math.Abs(v - value));
+                    var discretizedValueIndex = discretizedValues[i].IndexOf(discretizedValue);
+                    discretizedSeries.Add(discretizedValueIndex);
                 }
-                Console.WriteLine();
+                _discretizedSeries.Add(discretizedSeries);
             }
 
-            for (var i = 0; i < _sampledSeriesSet.Count; i++)
-            {
-                for (var j = 0; j < _rawSeries[i].Count; j++)
-                {
-                    var point = _rawSeries[i][j];
-                    if (double.IsNaN(point)) _sampledSeriesSet[i].Add(samplePointsSet[i].IndexOf(double.NaN));
-                    else _sampledSeriesSet[i].Add(samplePointsSet[i].IndexOf(samplePointsSet[i].MinBy(m => double.IsNaN(m) ? 1 : Math.Abs(m - _rawSeries[i][j]))));
-                    Console.Write($@"{_sampledSeriesSet[i][j]}, ");
-                }
-                Console.WriteLine();
-            }
             var analizer = new RelationAnalyzer();
-            foreach (var series in _sampledSeriesSet)
+            foreach (var series in _discretizedSeries)
             {
                 analizer.AddSeries(series.ToArray());
             }
