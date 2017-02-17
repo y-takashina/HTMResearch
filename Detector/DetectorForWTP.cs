@@ -11,7 +11,7 @@ using static PipExtensions.PipExtensions;
 
 namespace Detector
 {
-    public class DetectorForWaterTreatmentPlant
+    public class DetectorForWTP
     {
         private List<List<double>> _rawSeries;
         private readonly List<List<int>> _discretizedSeries = new List<List<int>>();
