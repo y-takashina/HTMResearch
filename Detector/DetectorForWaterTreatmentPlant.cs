@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using MoreLinq;
-using MatViz;
+using static MatViz.MatViz;
 using static PipExtensions.PipExtensions;
 
 namespace Detector
@@ -17,7 +17,7 @@ namespace Detector
         {
             LoadRawSeries();
             DiscretizeSeries();
-            MutualInformationMatrix(_discretizedSeries.Select(s => s.ToArray()).ToArray()).SaveMatrixImage("mutual_information_matrix");
+            SaveMatrixImage(MutualInformationMatrix(_discretizedSeries), "mutual_information_matrix");
         }
 
         public void LoadRawSeries()
