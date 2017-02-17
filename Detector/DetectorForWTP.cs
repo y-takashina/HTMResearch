@@ -19,18 +19,22 @@ namespace Detector
         private const int N1 = 32;
         private const int N2 = 8;
         private const int N3 = 4;
+        // 各階層におけるノード数
+        private const int M1 = 38;
+        private const int M2 = 6;
+        private const int M3 = 1;
         // Level 1
-        private readonly double[,,] _transitions1 = new double[38, N1, N1];
-        private double[,,] _probabilities1 = new double[38, N1, N1];
-        private readonly double[,,] _distances1 = new double[38, N1, N1];
+        private readonly double[,,] _transitions1 = new double[M1, N1, N1];
+        private double[,,] _probabilities1 = new double[M1, N1, N1];
+        private readonly double[,,] _distances1 = new double[M1, N1, N1];
         // Level 2
-        private readonly double[,,] _transitions2 = new double[6, N2, N2];
-        private double[,,] _probabilities2 = new double[6, N2, N2];
-        private readonly double[,,] _distances2 = new double[6, N2, N2];
+        private readonly double[,,] _transitions2 = new double[M2, N2, N2];
+        private double[,,] _probabilities2 = new double[M2, N2, N2];
+        private readonly double[,,] _distances2 = new double[M2, N2, N2];
         // Level 3
-        private readonly double[,,] _transitions3 = new double[1, N3, N3];
-        private double[,,] _probabilities3 = new double[1, N3, N3];
-        private readonly double[,,] _distances3 = new double[1, N3, N3];
+        private readonly double[,,] _transitions3 = new double[M3, N3, N3];
+        private double[,,] _probabilities3 = new double[M3, N3, N3];
+        private readonly double[,,] _distances3 = new double[M3, N3, N3];
 
 
         public void Initialize(List<List<double>> rawSeries)
