@@ -17,20 +17,14 @@ namespace Detector
         {
             using (var sr = new StreamReader(@"..\data\water-treatment.csv"))
             {
-                var head = sr.ReadLine().Split(',');
-                for (var i = 0; i < head.Length - 1; i++)
-                {
-                    double value;
-                    _rawSeries.Add(new List<double> {double.TryParse(head[i + 1], out value) ? value : double.NaN});
-                    _sampledSeriesSet.Add(new List<int>());
-                }
                 while (!sr.EndOfStream)
                 {
-                    var line = sr.ReadLine().Split(',');
-                    for (var i = 0; i < line.Length - 1; i++)
+                    var line = sr.ReadLine().Split(',').Skip(1).ToArray();
+                    if (!_rawSeries.Any()) foreach (var _ in line) _rawSeries.Add(new List<double>());
+                    for (var i = 0; i < line.Length; i++)
                     {
                         double value;
-                        _rawSeries[i].Add(double.TryParse(line[i + 1], out value) ? value : double.NaN);
+                        _rawSeries[i].Add(double.TryParse(line[i], out value) ? value : double.NaN);
                     }
                 }
             }
