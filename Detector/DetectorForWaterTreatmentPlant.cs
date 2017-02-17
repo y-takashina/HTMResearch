@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using MoreLinq;
 using MatViz;
+using static PipExtensions.PipExtensions;
 
 namespace Detector
 {
@@ -16,7 +17,7 @@ namespace Detector
         {
             LoadRawSeries();
             DiscretizeSeries();
-            RelationAnalysis.CalcMutualInformationMatrix(_discretizedSeries.Select(s => s.ToArray()).ToArray()).SaveMatrixImage("mutual_information_matrix");
+            MutualInformationMatrix(_discretizedSeries.Select(s => s.ToArray()).ToArray()).SaveMatrixImage("mutual_information_matrix");
         }
 
         public void LoadRawSeries()

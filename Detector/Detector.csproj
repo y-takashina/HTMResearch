@@ -56,7 +56,6 @@
     <Compile Include="Extensions.cs" />
     <Compile Include="HTMDetector.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RelationAnalysis.cs" />
     <Compile Include="Sampling.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -65,12 +64,8 @@
       <Name>Clustering</Name>
     </ProjectReference>
     <ProjectReference Include="..\MatViz\MatViz.csproj">
-      <Project>{B6F077BC-DAD9-4FF2-B831-1C79BA2E790B}</Project>
+      <Project>{b6f077bc-dad9-4ff2-b831-1c79ba2e790b}</Project>
       <Name>MatViz</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\NabViz\NabViz.csproj">
-      <Project>{0b19557f-ea58-4486-a98e-396e5f1c7965}</Project>
-      <Name>NabViz</Name>
     </ProjectReference>
     <ProjectReference Include="..\PipExtensions\PipExtensions.csproj">
       <Project>{7728F4CF-46AF-437C-802A-62EDBF7C5154}</Project>
