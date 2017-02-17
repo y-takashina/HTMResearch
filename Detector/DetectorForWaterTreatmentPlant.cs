@@ -2,66 +2,55 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using MoreLinq;
+using static MatViz.MatViz;
+using static PipExtensions.PipExtensions;
 
 namespace Detector
 {
     public class DetectorForWaterTreatmentPlant
     {
         private readonly List<List<double>> _rawSeries = new List<List<double>>();
-        private readonly List<List<int>> _sampledSeriesSet = new List<List<int>>();
+        private readonly List<List<int>> _discretizedSeries = new List<List<int>>();
 
         public DetectorForWaterTreatmentPlant()
         {
+            LoadRawSeries();
+            DiscretizeSeries();
+            SaveMatrixImage(MutualInformationMatrix(_discretizedSeries), "mutual_information_matrix");
+        }
+
+        public void LoadRawSeries()
+        {
             using (var sr = new StreamReader(@"..\data\water-treatment.csv"))
             {
-                var head = sr.ReadLine().Split(',');
-                for (var i = 0; i < head.Length - 1; i++)
-                {
-                    double value;
-                    _rawSeries.Add(new List<double> {double.TryParse(head[i + 1], out value) ? value : double.NaN});
-                    _sampledSeriesSet.Add(new List<int>());
-                }
                 while (!sr.EndOfStream)
                 {
-                    var line = sr.ReadLine().Split(',');
-                    for (var i = 0; i < line.Length - 1; i++)
+                    var line = sr.ReadLine().Split(',').Skip(1).ToArray();
+                    if (!_rawSeries.Any()) foreach (var _ in line) _rawSeries.Add(new List<double>());
+                    for (var i = 0; i < line.Length; i++)
                     {
                         double value;
-                        _rawSeries[i].Add(double.TryParse(line[i + 1], out value) ? value : double.NaN);
+                        _rawSeries[i].Add(double.TryParse(line[i], out value) ? value : double.NaN);
                     }
                 }
             }
-            var samplePointsSet = _rawSeries.Select(series => Sampling.CalcSamplePoints(series, 32, true).ToList()).ToList();
-            foreach (var samplePoints in samplePointsSet)
-            {
-                foreach (var point in samplePoints)
-                {
-                    Console.Write($@"{point}, ");
-                }
-                Console.WriteLine();
-            }
+        }
 
-            for (var i = 0; i < _sampledSeriesSet.Count; i++)
+        public void DiscretizeSeries()
+        {
+            var discretizedValues = _rawSeries.Select(series => Sampling.CalcSamplePoints(series, 32, true).ToList()).ToList();
+            for (var i = 0; i < _rawSeries.Count; i++)
             {
-                for (var j = 0; j < _rawSeries[i].Count; j++)
+                var discretizedSeries = new List<int>();
+                foreach (var value in _rawSeries[i])
                 {
-                    var point = _rawSeries[i][j];
-                    if (double.IsNaN(point)) _sampledSeriesSet[i].Add(samplePointsSet[i].IndexOf(double.NaN));
-                    else _sampledSeriesSet[i].Add(samplePointsSet[i].IndexOf(samplePointsSet[i].MinBy(m => double.IsNaN(m) ? 1 : Math.Abs(m - _rawSeries[i][j]))));
-                    Console.Write($@"{_sampledSeriesSet[i][j]}, ");
+                    var discretizedValue = double.IsNaN(value) ? value : discretizedValues[i].Where(v => !double.IsNaN(v)).MinBy(v => Math.Abs(v - value));
+                    var discretizedValueIndex = discretizedValues[i].IndexOf(discretizedValue);
+                    discretizedSeries.Add(discretizedValueIndex);
                 }
-                Console.WriteLine();
+                _discretizedSeries.Add(discretizedSeries);
             }
-            var analizer = new RelationAnalyzer();
-            foreach (var series in _sampledSeriesSet)
-            {
-                analizer.AddSeries(series.ToArray());
-            }
-            analizer.CalcMutualInformation();
-            analizer.SaveRelationImage();
         }
     }
 }
