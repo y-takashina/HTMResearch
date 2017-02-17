@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Clustering;
 using MoreLinq;
+using PipExtensions;
+using static Clustering.Clustering;
 using static MatViz.MatViz;
 using static PipExtensions.PipExtensions;
 
@@ -12,11 +15,33 @@ namespace Detector
     {
         private List<List<double>> _rawSeries;
         private readonly List<List<int>> _discretizedSeries = new List<List<int>>();
+        private double[,] _relationships;
 
         public void Initialize(List<List<double>> rawSeries)
         {
             _rawSeries = rawSeries.Select(v => v).ToList();
             _discretizeSeries();
+            _relationships = MutualInformationMatrix(_discretizedSeries);
+        }
+
+        public void ClusterSeries()
+        {
+            var cluster = AggregativeHierarchicalClustering(Enumerable.Range(0, _relationships.GetLength(0)).ToArray(), (i, j) => _relationships[i, j], Metrics.GroupAverage);
+            var cluster1Members = cluster.Extract(8).Select(c => c.GetMembers().Select(s => s.Value)).ToArray();
+            var order = cluster1Members.SelectMany(i => i).ToArray();
+            var memberships = new double[38, 8];
+            for (var k = 0; k < 8; k++)
+            {
+                for (var j = 0; j < 38; j++)
+                {
+                    memberships[j, k] = cluster1Members[k].Contains(j) ? 1.0 : 1e-6;
+                }
+            }
+            SaveMatrixImage(memberships, "membership");
+            _relationships = _relationships.OrderRaws(order);
+            _relationships = _relationships.OrderCols(order);
+            SaveMatrixImage(_relationships, "sorted");
+            cluster.Print();
         }
 
         private void _discretizeSeries()
@@ -39,7 +64,7 @@ namespace Detector
         {
             Directory.CreateDirectory(path);
             path += '\\';
-            SaveMatrixImage(MutualInformationMatrix(_discretizedSeries), path + "mutual_information_matrix");
+            SaveMatrixImage(_relationships, path + "mutual_information_matrix");
         }
     }
 }
