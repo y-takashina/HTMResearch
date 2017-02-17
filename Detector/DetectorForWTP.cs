@@ -13,15 +13,34 @@ namespace Detector
 {
     public class DetectorForWTP
     {
-        private List<List<double>> _rawSeries;
-        private readonly List<List<int>> _discretizedSeries = new List<List<int>>();
+        private readonly List<List<int>> _series = new List<List<int>>();
         private double[,] _relationships;
+        // 各階層におけるクラスタ数
+        private const int N1 = 32;
+        private const int N2 = 8;
+        private const int N3 = 4;
+        // Level 1
+        private readonly double[,,] _transitions1 = new double[38, N1, N1];
+        private double[,,] _probabilities1 = new double[38, N1, N1];
+        private readonly double[,,] _distances1 = new double[38, N1, N1];
+        // Level 2
+        private readonly double[,,] _transitions2 = new double[6, N2, N2];
+        private double[,,] _probabilities2 = new double[6, N2, N2];
+        private readonly double[,,] _distances2 = new double[6, N2, N2];
+        // Level 3
+        private readonly double[,,] _transitions3 = new double[1, N3, N3];
+        private double[,,] _probabilities3 = new double[1, N3, N3];
+        private readonly double[,,] _distances3 = new double[1, N3, N3];
+
 
         public void Initialize(List<List<double>> rawSeries)
         {
-            _rawSeries = rawSeries.Select(v => v).ToList();
-            _discretizeSeries();
-            _relationships = MutualInformationMatrix(_discretizedSeries);
+            _discretizeSeries(rawSeries);
+            _relationships = MutualInformationMatrix(_series);
+        }
+
+        public void Learn()
+        {
         }
 
         public void ClusterSeries()
@@ -44,19 +63,19 @@ namespace Detector
             cluster.Print();
         }
 
-        private void _discretizeSeries()
+        private void _discretizeSeries(List<List<double>> rawSeries)
         {
-            var discretizedValues = _rawSeries.Select(series => Sampling.CalcSamplePoints(series, 32, true).ToList()).ToList();
-            for (var i = 0; i < _rawSeries.Count; i++)
+            var discretizedValues = rawSeries.Select(series => Sampling.CalcSamplePoints(series, 32, true).ToList()).ToList();
+            for (var i = 0; i < rawSeries.Count; i++)
             {
                 var discretizedSeries = new List<int>();
-                foreach (var value in _rawSeries[i])
+                foreach (var value in rawSeries[i])
                 {
                     var discretizedValue = double.IsNaN(value) ? value : discretizedValues[i].Where(v => !double.IsNaN(v)).MinBy(v => Math.Abs(v - value));
                     var discretizedValueIndex = discretizedValues[i].IndexOf(discretizedValue);
                     discretizedSeries.Add(discretizedValueIndex);
                 }
-                _discretizedSeries.Add(discretizedSeries);
+                _series.Add(discretizedSeries);
             }
         }
 
