@@ -10,34 +10,16 @@ namespace Detector
 {
     public class DetectorForWaterTreatmentPlant
     {
-        private readonly List<List<double>> _rawSeries = new List<List<double>>();
+        private List<List<double>> _rawSeries;
         private readonly List<List<int>> _discretizedSeries = new List<List<int>>();
 
-        public DetectorForWaterTreatmentPlant()
+        public void Initialize(List<List<double>> rawSeries)
         {
-            LoadRawSeries();
-            DiscretizeSeries();
-            SaveMatrixImage(MutualInformationMatrix(_discretizedSeries), "mutual_information_matrix");
+            _rawSeries = rawSeries.Select(v => v).ToList();
+            _discretizeSeries();
         }
 
-        public void LoadRawSeries()
-        {
-            using (var sr = new StreamReader(@"..\data\water-treatment.csv"))
-            {
-                while (!sr.EndOfStream)
-                {
-                    var line = sr.ReadLine().Split(',').Skip(1).ToArray();
-                    if (!_rawSeries.Any()) foreach (var _ in line) _rawSeries.Add(new List<double>());
-                    for (var i = 0; i < line.Length; i++)
-                    {
-                        double value;
-                        _rawSeries[i].Add(double.TryParse(line[i], out value) ? value : double.NaN);
-                    }
-                }
-            }
-        }
-
-        public void DiscretizeSeries()
+        private void _discretizeSeries()
         {
             var discretizedValues = _rawSeries.Select(series => Sampling.CalcSamplePoints(series, 32, true).ToList()).ToList();
             for (var i = 0; i < _rawSeries.Count; i++)
@@ -51,6 +33,13 @@ namespace Detector
                 }
                 _discretizedSeries.Add(discretizedSeries);
             }
+        }
+
+        public void SaveResultImages(string path = ".")
+        {
+            Directory.CreateDirectory(path);
+            path += '\\';
+            SaveMatrixImage(MutualInformationMatrix(_discretizedSeries), path + "mutual_information_matrix");
         }
     }
 }
