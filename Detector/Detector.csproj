@@ -52,7 +52,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DataReader.cs" />
-    <Compile Include="DetectorForWaterTreatmentPlant.cs" />
+    <Compile Include="DetectorForWTP.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="HTMDetector.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

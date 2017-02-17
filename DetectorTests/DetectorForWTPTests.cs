@@ -9,10 +9,10 @@ using System.Threading.Tasks;
 namespace Detector.Tests
 {
     [TestClass()]
-    public class DetectorForWaterTreatmentPlantTests
+    public class DetectorForWTPTests
     {
         [TestMethod()]
-        public void DetectorForWaterTreatmentPlantTest()
+        public void DetectorForWTPTest()
         {
             var rawSeries = new List<List<double>>();
             using (var sr = new StreamReader(@"..\data\water-treatment.csv"))
@@ -29,8 +29,9 @@ namespace Detector.Tests
                 }
             }
 
-            var detector = new DetectorForWaterTreatmentPlant();
+            var detector = new DetectorForWTP();
             detector.Initialize(rawSeries);
+            detector.SaveResultImages();
         }
     }
 }
