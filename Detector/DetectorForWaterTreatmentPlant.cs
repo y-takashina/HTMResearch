@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using MoreLinq;
+using MatViz;
 
 namespace Detector
 {
@@ -17,13 +16,7 @@ namespace Detector
         {
             LoadRawSeries();
             DiscretizeSeries();
-            var analizer = new RelationAnalyzer();
-            foreach (var series in _discretizedSeries)
-            {
-                analizer.AddSeries(series.ToArray());
-            }
-            analizer.CalcMutualInformation();
-            analizer.SaveRelationImage();
+            RelationAnalysis.CalcMutualInformationMatrix(_discretizedSeries.Select(s => s.ToArray()).ToArray()).SaveMatrixImage("mutual_information_matrix");
         }
 
         public void LoadRawSeries()
