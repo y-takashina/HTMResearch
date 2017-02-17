@@ -15,7 +15,19 @@ namespace Detector
 
         public DetectorForWaterTreatmentPlant()
         {
-            // データ読み込み
+            LoadRawSeries();
+            DiscretizeSeries();
+            var analizer = new RelationAnalyzer();
+            foreach (var series in _discretizedSeries)
+            {
+                analizer.AddSeries(series.ToArray());
+            }
+            analizer.CalcMutualInformation();
+            analizer.SaveRelationImage();
+        }
+
+        public void LoadRawSeries()
+        {
             using (var sr = new StreamReader(@"..\data\water-treatment.csv"))
             {
                 while (!sr.EndOfStream)
@@ -29,7 +41,10 @@ namespace Detector
                     }
                 }
             }
-            // 離散化
+        }
+
+        public void DiscretizeSeries()
+        {
             var discretizedValues = _rawSeries.Select(series => Sampling.CalcSamplePoints(series, 32, true).ToList()).ToList();
             for (var i = 0; i < _rawSeries.Count; i++)
             {
@@ -42,14 +57,6 @@ namespace Detector
                 }
                 _discretizedSeries.Add(discretizedSeries);
             }
-
-            var analizer = new RelationAnalyzer();
-            foreach (var series in _discretizedSeries)
-            {
-                analizer.AddSeries(series.ToArray());
-            }
-            analizer.CalcMutualInformation();
-            analizer.SaveRelationImage();
         }
     }
 }
