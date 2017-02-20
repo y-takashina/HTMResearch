@@ -23,6 +23,10 @@ namespace Detector
         private const int M1 = 38;
         private const int M2 = 6;
         private const int M3 = 1;
+        // Spatial Pooler
+        private readonly List<List<int>>[] _spatialPoolerList1 = new List<List<int>>[M1];
+        private readonly List<List<int>>[] _spatialPoolerList2 = new List<List<int>>[M2];
+        private readonly List<List<int>>[] _spatialPoolerList3 = new List<List<int>>[M3];
         // Level 1
         private readonly double[][,] _transitions1 = Enumerable.Repeat(new double[N1, N1], M1).ToArray();
         private readonly double[][,] _probabilities1 = Enumerable.Repeat(new double[N1, N1], M1).ToArray();
@@ -36,24 +40,27 @@ namespace Detector
         private readonly double[][,] _probabilities3 = Enumerable.Repeat(new double[N3, N3], M3).ToArray();
         private readonly double[][,] _distances3 = Enumerable.Repeat(new double[N3, N3], M3).ToArray();
         // 帰属度行列1
-        private readonly double[][,] _membership1TP = Enumerable.Repeat(new double[N1, N2], M3).ToArray();
-        private readonly double[][,] _membership2TP = Enumerable.Repeat(new double[N2, N3], M2).ToArray();
+        private readonly int[][,] _membership1TP = Enumerable.Repeat(new int[N1, N2], M1).ToArray();
+        private readonly int[][,] _membership2TP = Enumerable.Repeat(new int[N2, N3], M2).ToArray();
         // 帰属度行列2
-        private readonly double[][,] _membership12SP = Enumerable.Repeat(new double[M1, M2], M3).ToArray();
-        private readonly double[][,] _membership23SP = Enumerable.Repeat(new double[M2, M3], M2).ToArray();
+        private readonly int[][,] _membership12SP = Enumerable.Repeat(new int[M1, M2], N2).ToArray();
+        private readonly int[][,] _membership23SP = Enumerable.Repeat(new int[M2, M3], N3).ToArray();
 
         public void Initialize(List<List<double>> rawSeries)
         {
             _discretizeSeries(rawSeries);
             _relationships = MutualInformationMatrix(_series);
+            for (var m1 = 0; m1 < M1; m1++) _spatialPoolerList1[m1] = new List<List<int>>();
+            for (var m2 = 0; m2 < M2; m2++) _spatialPoolerList2[m2] = new List<List<int>>();
+            for (var m3 = 0; m3 < M3; m3++) _spatialPoolerList2[m3] = new List<List<int>>();
         }
 
         public void Learn()
         {
-            // 遷移のカウント
             for (var i = 0; i < _series.Count; i++)
             {
-                for (var j = 0; j < _series[i].Count/2; j++)
+                // 遷移のカウント
+                for (var j = 0; j < _series[i].Count - 1; j++)
                 {
                     _transitions1[i][_series[i][j], _series[i][j + 1]] += 1;
                 }
@@ -66,16 +73,30 @@ namespace Detector
                         _distances1[i][j, k] = 1 - (_probabilities1[i][j, k] + _probabilities1[i][k, j])/2;
                     }
                 }
-                // Level 1 の Temporal Pooling 
+                // Level 1 の Temporal Pooling
                 var cluster1 = AggregativeHierarchicalClustering(Enumerable.Range(0, N1).ToArray(), (j, k) => _distances1[i][j, k], Metrics.GroupAverage);
                 var cluster1Members = cluster1.Extract(N2).Select(c => c.GetMembers().Select(s => s.Value)).ToArray();
                 for (var k = 0; k < N2; k++)
                 {
-                    var sum = cluster1Members[k].Count();
                     for (var j = 0; j < N1; j++)
                     {
-                        _membership12[i][j, k] = cluster1Members[k].Contains(j) ? 1.0 : 1e-6;
+                        _membership1TP[i][j, k] = cluster1Members[k].Contains(j) ? 1 : 0;
                     }
+                }
+            }
+            // Level 1-2 間の Spatial Pooling
+            for (var i = 0; i < _series.First().Count; i++)
+            {
+                for (var m2 = 0; m2 < M2; m2++)
+                {
+                    var list = new List<int>();
+                    for (var m1 = m2; m1 < M1; m1 += M2)
+                    {
+                        var pattern = Enumerable.Range(0, N1).Select(j => j == _series[m1][i] ? 1 : 0).ToArray();
+                        var group = _membership1TP[m1].T().Mul(pattern);
+                        list.AddRange(group);
+                    }
+                    if (_spatialPoolerList2[m2].All(pattern => !pattern.SequenceEqual(list))) _spatialPoolerList2[m2].Add(list);
                 }
             }
         }

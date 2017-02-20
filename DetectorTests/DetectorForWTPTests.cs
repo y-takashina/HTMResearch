@@ -31,6 +31,7 @@ namespace Detector.Tests
 
             var detector = new DetectorForWTP();
             detector.Initialize(rawSeries);
+            detector.Learn();
             detector.SaveResultImages();
         }
     }
