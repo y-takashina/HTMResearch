@@ -205,15 +205,21 @@ namespace Detector
 
         public void SaveResultImages(string path = ".")
         {
+            path += @"\multimodal\";
             Directory.CreateDirectory(path);
-            path += '\\';
             SaveMatrixImage(_relationships, path + "mutual_information_matrix");
-            SaveMatrixImage(_transitions1[0], path + "layer1_transitions");
-            SaveMatrixImage(_probabilities1[0], path + "layer1_probabilities");
-            SaveMatrixImage(_distances1[0], path + "layer1_distances_mean", threshold: double.MaxValue, bgWhite: false);
+            for (var i = 0; i < M1; i++)
+            {
+                SaveMatrixImage(_transitions1[i], path + "layer1_transitions" + i);
+                SaveMatrixImage(_probabilities1[i], path + "layer1_probabilities" + i);
+                SaveMatrixImage(_distances1[i], path + "layer1_distances_mean" + i, threshold: double.MaxValue, bgWhite: false);
+            }
+            for (var i = 0; i < M2; i++)
+            {
 //            SaveMatrixImage(_membership12SP[0], path + "layer12_membership");
-            SaveMatrixImage(_probabilities2[0], path + "layer2_probabilities");
-            SaveMatrixImage(_distances2[0], path + "layer2_distances_mean", threshold: double.MaxValue, bgWhite: false);
+                SaveMatrixImage(_probabilities2[i], path + "layer2_probabilities" + i);
+                SaveMatrixImage(_distances2[i], path + "layer2_distances_mean" + i, threshold: double.MaxValue, bgWhite: false);
+            }
         }
     }
 }
