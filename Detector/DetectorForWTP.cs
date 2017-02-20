@@ -24,18 +24,23 @@ namespace Detector
         private const int M2 = 6;
         private const int M3 = 1;
         // Level 1
-        private readonly double[,,] _transitions1 = new double[M1, N1, N1];
-        private double[,,] _probabilities1 = new double[M1, N1, N1];
-        private readonly double[,,] _distances1 = new double[M1, N1, N1];
+        private readonly double[][,] _transitions1 = Enumerable.Repeat(new double[N1, N1], M1).ToArray();
+        private readonly double[][,] _probabilities1 = Enumerable.Repeat(new double[N1, N1], M1).ToArray();
+        private readonly double[][,] _distances1 = Enumerable.Repeat(new double[N1, N1], M1).ToArray();
         // Level 2
-        private readonly double[,,] _transitions2 = new double[M2, N2, N2];
-        private double[,,] _probabilities2 = new double[M2, N2, N2];
-        private readonly double[,,] _distances2 = new double[M2, N2, N2];
+        private readonly double[][,] _transitions2 = Enumerable.Repeat(new double[N2, N2], M2).ToArray();
+        private readonly double[][,] _probabilities2 = Enumerable.Repeat(new double[N2, N2], M2).ToArray();
+        private readonly double[][,] _distances2 = Enumerable.Repeat(new double[N2, N2], M2).ToArray();
         // Level 3
-        private readonly double[,,] _transitions3 = new double[M3, N3, N3];
-        private double[,,] _probabilities3 = new double[M3, N3, N3];
-        private readonly double[,,] _distances3 = new double[M3, N3, N3];
-
+        private readonly double[][,] _transitions3 = Enumerable.Repeat(new double[N3, N3], M3).ToArray();
+        private readonly double[][,] _probabilities3 = Enumerable.Repeat(new double[N3, N3], M3).ToArray();
+        private readonly double[][,] _distances3 = Enumerable.Repeat(new double[N3, N3], M3).ToArray();
+        // 帰属度行列1
+        private readonly double[][,] _membership1TP = Enumerable.Repeat(new double[N1, N2], M3).ToArray();
+        private readonly double[][,] _membership2TP = Enumerable.Repeat(new double[N2, N3], M2).ToArray();
+        // 帰属度行列2
+        private readonly double[][,] _membership12SP = Enumerable.Repeat(new double[M1, M2], M3).ToArray();
+        private readonly double[][,] _membership23SP = Enumerable.Repeat(new double[M2, M3], M2).ToArray();
 
         public void Initialize(List<List<double>> rawSeries)
         {
@@ -45,6 +50,34 @@ namespace Detector
 
         public void Learn()
         {
+            // 遷移のカウント
+            for (var i = 0; i < _series.Count; i++)
+            {
+                for (var j = 0; j < _series[i].Count/2; j++)
+                {
+                    _transitions1[i][_series[i][j], _series[i][j + 1]] += 1;
+                }
+                // Level 1
+                _probabilities1[i] = _transitions1[i].NormalizeToRaw();
+                for (var j = 0; j < N1; j++)
+                {
+                    for (var k = 0; k < N1; k++)
+                    {
+                        _distances1[i][j, k] = 1 - (_probabilities1[i][j, k] + _probabilities1[i][k, j])/2;
+                    }
+                }
+                // Level 1 の Temporal Pooling 
+                var cluster1 = AggregativeHierarchicalClustering(Enumerable.Range(0, N1).ToArray(), (j, k) => _distances1[i][j, k], Metrics.GroupAverage);
+                var cluster1Members = cluster1.Extract(N2).Select(c => c.GetMembers().Select(s => s.Value)).ToArray();
+                for (var k = 0; k < N2; k++)
+                {
+                    var sum = cluster1Members[k].Count();
+                    for (var j = 0; j < N1; j++)
+                    {
+                        _membership12[i][j, k] = cluster1Members[k].Contains(j) ? 1.0 : 1e-6;
+                    }
+                }
+            }
         }
 
         public void ClusterSeries()
