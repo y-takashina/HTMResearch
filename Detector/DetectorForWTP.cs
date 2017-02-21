@@ -18,11 +18,12 @@ namespace Detector
         private List<List<int>> _series3;
         private double[,] _relationships;
         // 各階層におけるクラスタ数
-        private const int N1 = 32;
-        private const int N2 = 8;
-        private const int N3 = 4;
+        private const int N1 = 16; //16;
+        private const int N2 = 4; //4;
+        private const int N3 = 4; //4;
         // 各階層におけるノード数
         private const int M1 = 38;
+
         private const int M2 = 6;
         private const int M3 = 1;
         // Spatial Pooler
@@ -38,15 +39,13 @@ namespace Detector
         private readonly double[][,] _probabilities2 = new double[M2][,];
         private readonly double[][,] _distances2 = new double[M2][,];
         // Level 3
-        private readonly double[][,] _transitions3 = Enumerable.Repeat(new double[N3, N3], M3).ToArray();
-        private readonly double[][,] _probabilities3 = Enumerable.Repeat(new double[N3, N3], M3).ToArray();
-        private readonly double[][,] _distances3 = Enumerable.Repeat(new double[N3, N3], M3).ToArray();
+        private readonly double[][,] _transitions3 = new double[M3][,];
+        private readonly double[][,] _probabilities3 = new double[M3][,];
+        private readonly double[][,] _distances3 = new double[M3][,];
         // 帰属度行列1
-        private readonly int[][,] _membership1TP = Enumerable.Repeat(new int[N1, N2], M1).ToArray();
-        private readonly int[][,] _membership2TP = Enumerable.Repeat(new int[N1, N2], M2).ToArray();
-        // 帰属度行列2
-        private readonly int[][,] _membership12SP = Enumerable.Repeat(new int[M1, M2], N2).ToArray();
-        private readonly int[][,] _membership23SP = Enumerable.Repeat(new int[M2, M3], N3).ToArray();
+        private readonly int[][,] _membership1TP = new int[M1][,];
+        private readonly int[][,] _membership2TP = new int[M2][,];
+        private readonly int[][,] _membership3TP = new int[M3][,];
 
         public void Initialize(List<List<double>> rawSeries)
         {
@@ -60,18 +59,20 @@ namespace Detector
                 _transitions1[m1] = new double[N1, N1];
                 _probabilities1[m1] = new double[N1, N1];
                 _distances1[m1] = new double[N1, N1];
+                _membership1TP[m1] = new int[N1, N2];
             }
             for (var m2 = 0; m2 < M2; m2++)
             {
                 _spatialPoolerList2[m2] = new List<List<int>>();
                 _series2.Add(new List<int>());
-//                _transitions2[m2] = new double[N1, N1];
-//                _probabilities2[m2] = new double[N1, N1];
-//                _distances2[m2] = new double[N1, N1];
+//                _transitions2[m2] = new double[N2, N2];
+//                _probabilities2[m2] = new double[N2, N2];
+//                _distances2[m2] = new double[N2, N2];
+//                _membership2TP[m2] = new int[N2, N3];
             }
             for (var m3 = 0; m3 < M3; m3++)
             {
-                _spatialPoolerList2[m3] = new List<List<int>>();
+                _spatialPoolerList3[m3] = new List<List<int>>();
                 _series3.Add(new List<int>());
             }
             _relationships = MutualInformationMatrix(_series1);
@@ -79,6 +80,7 @@ namespace Detector
 
         public void Learn()
         {
+            // Level 1 の Temporal Pooling
             for (var i = 0; i < M1; i++)
             {
                 // 遷移のカウント
@@ -86,7 +88,7 @@ namespace Detector
                 {
                     _transitions1[i][_series1[i][j], _series1[i][j + 1]] += 1;
                 }
-                // Level 1
+                // 遷移確率の計算
                 _probabilities1[i] = _transitions1[i].NormalizeToRaw();
                 for (var j = 0; j < N1; j++)
                 {
@@ -95,7 +97,7 @@ namespace Detector
                         _distances1[i][j, k] = 1 - (_probabilities1[i][j, k] + _probabilities1[i][k, j])/2;
                     }
                 }
-                // Level 1 の Temporal Pooling
+                // クラスタリング
                 var cluster1 = AggregativeHierarchicalClustering(Enumerable.Range(0, N1).ToArray(), (j, k) => _distances1[i][j, k], Metrics.GroupAverage);
                 var cluster1Members = cluster1.Extract(N2).Select(c => c.GetMembers().Select(s => s.Value)).ToArray();
                 for (var k = 0; k < N2; k++)
@@ -135,34 +137,105 @@ namespace Detector
                 _transitions2[m2] = new double[count, count];
                 _probabilities2[m2] = new double[count, count];
                 _distances2[m2] = new double[count, count];
+                _membership2TP[m2] = new int[count, N3];
             }
+            // Level 2 の Temporal Pooling
             for (var i = 0; i < M2; i++)
             {
+                var n = _spatialPoolerList2[i].Count;
                 // 遷移のカウント
                 for (var j = 0; j < _series2[i].Count - 1; j++)
                 {
                     _transitions2[i][_series2[i][j], _series2[i][j + 1]] += 1;
                 }
-                // Level 2 
+                // 遷移確率の計算
                 _probabilities2[i] = _transitions2[i].NormalizeToRaw();
-                for (var j = 0; j < N1; j++)
+                for (var j = 0; j < n; j++)
                 {
-                    for (var k = 0; k < N1; k++)
+                    for (var k = 0; k < n; k++)
                     {
                         _distances2[i][j, k] = 1 - (_probabilities2[i][j, k] + _probabilities2[i][k, j])/2;
                     }
                 }
-                // Level 2 の Temporal Pooling
+                // クラスタリング
                 var cluster2 = AggregativeHierarchicalClustering(Enumerable.Range(0, _spatialPoolerList2[i].Count).ToArray(), (j, k) => _distances2[i][j, k], Metrics.GroupAverage);
-                var cluster2Members = cluster2.Extract(N2).Select(c => c.GetMembers().Select(s => s.Value)).ToArray();
-                for (var k = 0; k < N2; k++)
+                var cluster2Members = cluster2.Extract(N3).Select(c => c.GetMembers().Select(s => s.Value)).ToArray();
+                for (var k = 0; k < N3; k++)
                 {
-                    for (var j = 0; j < N1; j++)
+                    for (var j = 0; j < _spatialPoolerList2[i].Count; j++)
                     {
                         _membership2TP[i][j, k] = cluster2Members[k].Contains(j) ? 1 : 0;
                     }
                 }
             }
+            // Level 2-3 間の Spatial Pooling
+            for (var i = 0; i < _series1.First().Count; i++)
+            {
+                for (var m3 = 0; m3 < M3; m3++)
+                {
+                    _series3[m3].Add(-1);
+                    var list = new List<int>();
+                    for (var m2 = m3; m2 < M2; m2 += M3)
+                    {
+                        var pattern = Enumerable.Range(0, _spatialPoolerList2[m2].Count).Select(j => j == _series2[m2][i] ? 1 : 0).ToArray();
+                        var group = _membership2TP[m2].T().Mul(pattern);
+                        list.AddRange(group);
+                    }
+                    if (_spatialPoolerList3[m3].All(pattern => !pattern.SequenceEqual(list))) _spatialPoolerList3[m3].Add(list);
+                    for (var j = 0; j < _spatialPoolerList3[m3].Count; j++)
+                    {
+                        if (_spatialPoolerList3[m3][j].SequenceEqual(list))
+                        {
+                            _series3[m3][i] = j;
+                        }
+                    }
+                }
+            }
+            for (var m3 = 0; m3 < M3; m3++)
+            {
+                var count = _spatialPoolerList3[m3].Count;
+                _transitions3[m3] = new double[count, count];
+                _probabilities3[m3] = new double[count, count];
+                _distances3[m3] = new double[count, count];
+                _membership3TP[m3] = new int[count, N2];
+            }
+            // Level 3 の Temporal Pooling
+            for (var i = 0; i < M3; i++)
+            {
+                var n = _spatialPoolerList3[i].Count;
+                // 遷移のカウント
+                for (var j = 0; j < _series3[i].Count - 1; j++)
+                {
+                    _transitions3[i][_series3[i][j], _series3[i][j + 1]] += 1;
+                }
+                // 遷移確率の計算
+                _probabilities3[i] = _transitions3[i].NormalizeToRaw();
+                for (var j = 0; j < n; j++)
+                {
+                    for (var k = 0; k < n; k++)
+                    {
+                        _distances3[i][j, k] = 1 - (_probabilities3[i][j, k] + _probabilities3[i][k, j])/2;
+                    }
+                }
+                // クラスタリング
+                var cluster3 = AggregativeHierarchicalClustering(Enumerable.Range(0, _spatialPoolerList3[i].Count).ToArray(), (j, k) => _distances3[i][j, k], Metrics.Shortest);
+                var cluster3Members = cluster3.Extract(N2).Select(c => c.GetMembers().Select(s => s.Value)).ToArray();
+                for (var k = 0; k < N2; k++)
+                {
+                    for (var j = 0; j < _spatialPoolerList3[i].Count; j++)
+                    {
+                        _membership3TP[i][j, k] = cluster3Members[k].Contains(j) ? 1 : 0;
+                    }
+                }
+            }
+            var series4 = new List<int>();
+            for (var i = 0; i < _series1.First().Count; i++)
+            {
+                var pattern = Enumerable.Range(0, _spatialPoolerList3[0].Count).Select(j => j == _series3[0][i] ? 1 : 0).ToArray();
+                var group = _membership3TP[0].T().Mul(pattern);
+                series4.Add(group.ToList().IndexOf(group.Where(v => v == 1).First()));
+            }
+            series4.ForEach(Console.WriteLine);
         }
 
         public void ClusterSeries()
