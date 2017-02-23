@@ -19,7 +19,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ResultVisualization", "Resu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Clustering", "Clustering\Clustering.csproj", "{81EBDB49-BC50-4793-AC4F-BE0C24072329}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClusteringTests", "..\Clustering\ClusteringTests\ClusteringTests.csproj", "{9FC5158D-2B7C-4BB8-921B-42BFF897B47B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClusteringTests", "Clustering\ClusteringTests\ClusteringTests.csproj", "{9FC5158D-2B7C-4BB8-921B-42BFF897B47B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
