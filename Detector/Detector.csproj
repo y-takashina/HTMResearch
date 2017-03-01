@@ -54,6 +54,7 @@
     <Compile Include="DataReader.cs" />
     <Compile Include="DetectorForWTP.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="GaussianDetector.cs" />
     <Compile Include="HTMDetector.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Sampling.cs" />
