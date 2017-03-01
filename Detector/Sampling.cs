@@ -25,29 +25,14 @@ namespace Detector
             return points;
         }
 
-        public static double[] KMeansSampling(double[] data, int n)
+        public static double[] KMeansSampling(double[] data, int k)
         {
-            var rand = new Random();
-            var means = data.OrderBy(v => rand.Next()).Take(n).ToArray();
-
-            while (true)
-            {
-                var prevMeans = means.Select(v => v).ToArray();
-                var assignments = CalcAssignments(data, means);
-                means = CalcMeans(data, assignments, n);
-                if (!Enumerable.Range(0, n).Any(i => Math.Abs(means[i] - prevMeans[i]) > 1e-6)) break;
-            }
-            return means;
+            return Clustering.Clustering.KMeansClustering(data, k).Item1;
         }
 
-        private static int[] CalcAssignments(double[] data, double[] means)
+        public static double[] KMedoidsSampling(double[] data, int k)
         {
-            return data.Select(v => means.ToList().IndexOf(means.MinBy(m => Math.Abs(v - m)))).ToArray();
-        }
-
-        private static double[] CalcMeans(double[] data, int[] assignments, int n)
-        {
-            return Enumerable.Range(0, n).Select(i => data.Where((v, j) => i == assignments[j]).DefaultIfEmpty().Average()).ToArray();
+            return Clustering.Clustering.KMedoidsClustering(data, k).Item1;
         }
     }
 }
