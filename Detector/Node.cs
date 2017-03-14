@@ -28,12 +28,26 @@ namespace Detector
             TemporalPooler = new int[numberTemporalGroup].ToList();
         }
 
-        public int Forward(int input)
+        /// <summary>
+        /// 1-of-k な値を入力として受け取ったら、
+        /// 1-of-k なクラスタ割り当てを上に出力する。
+        /// </summary>
+        public int[] Forward(int[] input)
         {
             throw new NotImplementedException();
         }
 
-        public int Backward(int input)
+        public double[] Forward(double[] input)
+        {
+            throw new NotImplementedException();
+        }
+
+        public int[] Backward(int[] input)
+        {
+            throw new NotImplementedException();
+        }
+
+        public double[] Backward(double[] input)
         {
             throw new NotImplementedException();
         }
@@ -63,6 +77,9 @@ namespace Detector
             }
         }
 
-        public void Predict() {}
+        public void Predict()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
