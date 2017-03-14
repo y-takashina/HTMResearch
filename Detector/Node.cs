@@ -13,39 +13,32 @@ using PipExtensions;
 
 namespace Detector
 {
-    public abstract class Node<T>
+    public class Node
     {
-        public IEnumerable<T> Stream { get; set; }
-        public List<T> SpatialPooler { get; set; }
-        public List<T> TemporalPooler { get; set; }
-        public IEnumerable<Node<T>> ChildNodes { get; set; }
+        public IEnumerable<int> Stream { get; set; }
+        public List<int> SpatialPooler { get; set; }
+        public List<int> TemporalPooler { get; set; }
+        public IEnumerable<Node> ChildNodes { get; set; }
         public int[,] Membership { get; set; }
 
-        public abstract int Forward(T input);
-        public abstract T Backward(int input);
-        public abstract void Learn();
-        public abstract void Predict();
-    }
 
-    public class LeafNode<T> : Node<T>
-    {
-        public LeafNode(IEnumerable<T> inputStream, int numberTemporalGroup)
+        public Node(IEnumerable<int> inputStream, int numberTemporalGroup)
         {
             Stream = inputStream;
-            TemporalPooler = new T[numberTemporalGroup].ToList();
+            TemporalPooler = new int[numberTemporalGroup].ToList();
         }
 
-        public override int Forward(T input)
+        public int Forward(int input)
         {
             throw new NotImplementedException();
         }
 
-        public override T Backward(int input)
+        public int Backward(int input)
         {
             throw new NotImplementedException();
         }
 
-        public override void Learn()
+        public void Learn()
         {
             SpatialPooler = Stream.Distinct().ToList();
             var m = TemporalPooler.Count;
@@ -70,6 +63,6 @@ namespace Detector
             }
         }
 
-        public override void Predict() {}
+        public void Predict() {}
     }
 }
