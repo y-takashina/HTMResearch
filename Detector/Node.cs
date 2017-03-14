@@ -9,7 +9,7 @@ using System.Windows.Forms;
 using MoreLinq;
 using Clustering;
 using PipExtensions;
-
+using static Clustering.Clustering;
 
 namespace Detector
 {
@@ -28,27 +28,43 @@ namespace Detector
             TemporalPooler = new int[numberTemporalGroup].ToList();
         }
 
+        public Node(IEnumerable<Node> childNodes, int numberTemporalGroup)
+        {
+            ChildNodes = childNodes;
+            TemporalPooler = new int[numberTemporalGroup].ToList();
+        }
+
         /// <summary>
         /// 1-of-k な値を入力として受け取ったら、
         /// 1-of-k なクラスタ割り当てを上に出力する。
+        /// 主に学習時に使う。
         /// </summary>
         public int[] Forward(int[] input)
         {
+            if (input.Length != SpatialPooler.Count) throw new IndexOutOfRangeException("Feedforward input to a node must have the same length as its spatial pooler.");
+            return Membership.T().Mul(input);
+        }
+
+        /// <summary>
+        /// soft な値を入力として受け取ったら、
+        /// soft なクラスタ割り当てを上に出力する。
+        /// 主に推論時に使う。
+        /// </summary>
+        public List<double> Forward(List<double> input)
+        {
+            if (input.Count != SpatialPooler.Count) throw new IndexOutOfRangeException("Feedforward input to a node must have the same length as its spatial pooler.");
             throw new NotImplementedException();
         }
 
-        public double[] Forward(double[] input)
+        public List<int> Backward(List<int> input)
         {
+            if (input.Count != TemporalPooler.Count) throw new IndexOutOfRangeException("Feedback input to a node must have the same length as its spatial pooler.");
             throw new NotImplementedException();
         }
 
-        public int[] Backward(int[] input)
+        public List<double> Backward(List<double> input)
         {
-            throw new NotImplementedException();
-        }
-
-        public double[] Backward(double[] input)
-        {
+            if (input.Count != TemporalPooler.Count) throw new IndexOutOfRangeException("Feedback input to a node must have the same length as its spatial pooler.");
             throw new NotImplementedException();
         }
 
@@ -65,7 +81,7 @@ namespace Detector
             }
             var probabilities = transitions.NormalizeToRaw();
             var distances = probabilities.Add(probabilities.T());
-            var cluster = Clustering.Clustering.AggregativeHierarchicalClustering(Enumerable.Range(0, n), (i, j) => distances[i, j], Metrics.GroupAverage);
+            var cluster = AggregativeHierarchicalClustering(Enumerable.Range(0, n), (i, j) => distances[i, j], Metrics.GroupAverage);
             var clusterwiseMembers = cluster.Extract(m).Select(c => c.GetMembers().Select(s => s.Value)).ToArray();
             Membership = new int[n, m];
             for (var i = 0; i < n; i++)
