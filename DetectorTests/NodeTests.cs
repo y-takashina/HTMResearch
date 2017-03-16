@@ -16,7 +16,7 @@ namespace Detector.Tests
 
         public NodeTests()
         {
-            _node = new Node(new List<int> {3, 4, 5, 4, 3, 4, 5, 8, 0, 0}, 2);
+            _node = new LeafNode(new List<int> {3, 4, 5, 4, 3, 4, 5, 8, 0, 0}, 2);
             _node.Learn();
         }
 

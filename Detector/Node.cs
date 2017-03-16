@@ -13,33 +13,39 @@ using static Clustering.Clustering;
 
 namespace Detector
 {
+    public class LeafNode : Node
+    {
+        public LeafNode(IEnumerable<int> inputStream, int numberTemporalGroup)
+        {
+            Stream = inputStream;
+            NumberTemporalGroup = numberTemporalGroup;
+        }
+    }
+
+    public class InternalNode : Node
+    {
+        public InternalNode(IEnumerable<Node> childNodes, int numberTemporalGroup)
+        {
+            ChildNodes = childNodes;
+            NumberTemporalGroup = numberTemporalGroup;
+        }
+    }
+
     public class Node
     {
-        private readonly int _numberTemporalGroup;
+        protected int NumberTemporalGroup;
 
         /// <summary>
         /// alias of _numberTemporalGroup
         /// </summary>
-        private int M => _numberTemporalGroup;
+        protected int M => NumberTemporalGroup;
 
-        private int N => SpatialPooler?.Count ?? 0;
+        protected int N => SpatialPooler?.Count ?? 0;
 
         public IEnumerable<int> Stream { get; set; }
         public List<int> SpatialPooler { get; set; }
         public IEnumerable<Node> ChildNodes { get; set; }
         public int[,] Membership { get; set; }
-
-        public Node(IEnumerable<int> inputStream, int numberTemporalGroup)
-        {
-            Stream = inputStream;
-            _numberTemporalGroup = numberTemporalGroup;
-        }
-
-        public Node(IEnumerable<Node> childNodes, int numberTemporalGroup)
-        {
-            ChildNodes = childNodes;
-            _numberTemporalGroup = numberTemporalGroup;
-        }
 
         /// <summary>
         /// 1-of-k な値を入力として受け取ったら、
