@@ -60,8 +60,8 @@ namespace Detector
         public double[] Forward(double[] input)
         {
             if (input.Length != N) throw new IndexOutOfRangeException("Feedforward input to a node must have the same length as the node's spatial pooler.");
-            var temporalGroup = Enumerable.Range(0, M).Select(i => Enumerable.Range(0, N).Select(j => input[j] * Membership[j, i]).Max());
-            return temporalGroup.ToArray();
+            var temporalGroup = Enumerable.Range(0, M).Select(i => Enumerable.Range(0, N).Select(j => input[j] * Membership[j, i]).Max()).Normalize();
+            return temporalGroup;
         }
 
         public int[] Backward(int[] input)

@@ -45,7 +45,21 @@ namespace Detector.Tests
         [TestMethod()]
         public void ForwardTest1()
         {
-            Assert.Fail();
+            var inputs = new[]
+            {
+                new[] {0.2, 0.7, 0.0, 0.0, 0.1},
+                new[] {0.0, 0.0, 0.2, 0.6, 0.2},
+                new[] {0.2, 0.2, 0.2, 0.2, 0.2},
+            };
+            var answers = new[,] {{0.125, 0.875}, {0.75, 0.25}, {0.5, 0.5}};
+            for (var i = 0; i < 3; i++)
+            {
+                var output = _node.Forward(inputs[i]);
+                for (var j = 0; j < 2; j++)
+                {
+                    Assert.AreEqual(answers[i, j], output[j], 1e-6);
+                }
+            }
         }
 
         [TestMethod()]
