@@ -43,13 +43,22 @@ namespace Detector.Tests
         }
 
         [TestMethod()]
-        public void ForwardTest1() {}
+        public void ForwardTest1()
+        {
+            Assert.Fail();
+        }
 
         [TestMethod()]
-        public void BackwardTest() {}
+        public void BackwardTest()
+        {
+            Assert.Fail();
+        }
 
         [TestMethod()]
-        public void BackwardTest1() {}
+        public void BackwardTest1()
+        {
+            Assert.Fail();
+        }
 
         [TestMethod()]
         public void LearnTest()
@@ -65,6 +74,9 @@ namespace Detector.Tests
         }
 
         [TestMethod()]
-        public void PredictTest() {}
+        public void PredictTest()
+        {
+            Assert.Fail();
+        }
     }
 }
