@@ -29,7 +29,6 @@ namespace Detector
         public IEnumerable<Node> ChildNodes { get; set; }
         public int[,] Membership { get; set; }
 
-
         public Node(IEnumerable<int> inputStream, int numberTemporalGroup)
         {
             Stream = inputStream;
@@ -89,7 +88,8 @@ namespace Detector
             var probabilities = transitions.NormalizeToRaw();
             var distances = probabilities.Add(probabilities.T());
             var cluster = AggregativeHierarchicalClustering(Enumerable.Range(0, N), (i, j) => distances[i, j], Metrics.GroupAverage);
-            var clusterwiseMembers = cluster.Extract(M).Select(c => c.GetMembers().Select(s => s.Value)).ToArray();
+            var clusterwiseMembers = cluster.Extract(M).Select(c => c.GetMembers()).ToArray();
+            cluster.Print();
             Membership = new int[N, M];
             for (var i = 0; i < N; i++)
             {
