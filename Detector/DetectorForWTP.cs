@@ -17,13 +17,11 @@ namespace Detector
         private List<List<int>> _series2;
         private List<List<int>> _series3;
         private double[,] _relationships;
-        // 各階層におけるクラスタ数
-        private const int N1 = 16; //16;
-        private const int N2 = 4; //4;
-        private const int N3 = 4; //4;
+        // 各階層の入力と出力におけるパターン数。
+        private const int NIn = 32;
+        private const int NOut = 8;
         // 各階層におけるノード数
         private const int M1 = 38;
-
         private const int M2 = 6;
         private const int M3 = 1;
         // Spatial Pooler
@@ -56,19 +54,15 @@ namespace Detector
             {
                 _spatialPoolerList1[m1] = new List<List<int>>();
 //                _series1.Add(new List<int>());
-                _transitions1[m1] = new double[N1, N1];
-                _probabilities1[m1] = new double[N1, N1];
-                _distances1[m1] = new double[N1, N1];
-                _membership1TP[m1] = new int[N1, N2];
+                _transitions1[m1] = new double[NIn, NIn];
+                _probabilities1[m1] = new double[NIn, NIn];
+                _distances1[m1] = new double[NIn, NIn];
+                _membership1TP[m1] = new int[NIn, NOut];
             }
             for (var m2 = 0; m2 < M2; m2++)
             {
                 _spatialPoolerList2[m2] = new List<List<int>>();
                 _series2.Add(new List<int>());
-//                _transitions2[m2] = new double[N2, N2];
-//                _probabilities2[m2] = new double[N2, N2];
-//                _distances2[m2] = new double[N2, N2];
-//                _membership2TP[m2] = new int[N2, N3];
             }
             for (var m3 = 0; m3 < M3; m3++)
             {
@@ -90,19 +84,19 @@ namespace Detector
                 }
                 // 遷移確率の計算
                 _probabilities1[i] = _transitions1[i].NormalizeToRaw();
-                for (var j = 0; j < N1; j++)
+                for (var j = 0; j < NIn; j++)
                 {
-                    for (var k = 0; k < N1; k++)
+                    for (var k = 0; k < NIn; k++)
                     {
-                        _distances1[i][j, k] = 1 - (_probabilities1[i][j, k] + _probabilities1[i][k, j])/2;
+                        _distances1[i][j, k] = 1 - (_probabilities1[i][j, k] + _probabilities1[i][k, j]) / 2;
                     }
                 }
                 // クラスタリング
-                var cluster1 = AggregativeHierarchicalClustering(Enumerable.Range(0, N1).ToArray(), (j, k) => _distances1[i][j, k], Metrics.GroupAverage);
-                var cluster1Members = cluster1.Extract(N2).Select(c => c.GetMembers().Select(s => s.Value)).ToArray();
-                for (var k = 0; k < N2; k++)
+                var cluster1 = AggregativeHierarchicalClustering(Enumerable.Range(0, NIn).ToArray(), (j, k) => _distances1[i][j, k], Metrics.GroupAverage);
+                var cluster1Members = cluster1.Extract(NOut).Select(c => c.SelectMany()).ToArray();
+                for (var k = 0; k < NOut; k++)
                 {
-                    for (var j = 0; j < N1; j++)
+                    for (var j = 0; j < NIn; j++)
                     {
                         _membership1TP[i][j, k] = cluster1Members[k].Contains(j) ? 1 : 0;
                     }
@@ -117,11 +111,13 @@ namespace Detector
                     var list = new List<int>();
                     for (var m1 = m2; m1 < M1; m1 += M2)
                     {
-                        var pattern = Enumerable.Range(0, N1).Select(j => j == _series1[m1][i] ? 1 : 0).ToArray();
+                        var pattern = Enumerable.Range(0, NIn).Select(j => j == _series1[m1][i] ? 1 : 0).ToArray();
                         var group = _membership1TP[m1].T().Mul(pattern);
                         list.AddRange(group);
                     }
+                    // spatialPoolerList2 に記憶されていなかったら記憶。
                     if (_spatialPoolerList2[m2].All(pattern => !pattern.SequenceEqual(list))) _spatialPoolerList2[m2].Add(list);
+                    // 最近傍点に割り当て
                     for (var j = 0; j < _spatialPoolerList2[m2].Count; j++)
                     {
                         if (_spatialPoolerList2[m2][j].SequenceEqual(list))
@@ -137,7 +133,7 @@ namespace Detector
                 _transitions2[m2] = new double[count, count];
                 _probabilities2[m2] = new double[count, count];
                 _distances2[m2] = new double[count, count];
-                _membership2TP[m2] = new int[count, N3];
+                _membership2TP[m2] = new int[count, NOut];
             }
             // Level 2 の Temporal Pooling
             for (var i = 0; i < M2; i++)
@@ -154,13 +150,13 @@ namespace Detector
                 {
                     for (var k = 0; k < n; k++)
                     {
-                        _distances2[i][j, k] = 1 - (_probabilities2[i][j, k] + _probabilities2[i][k, j])/2;
+                        _distances2[i][j, k] = 1 - (_probabilities2[i][j, k] + _probabilities2[i][k, j]) / 2;
                     }
                 }
                 // クラスタリング
                 var cluster2 = AggregativeHierarchicalClustering(Enumerable.Range(0, _spatialPoolerList2[i].Count).ToArray(), (j, k) => _distances2[i][j, k], Metrics.GroupAverage);
-                var cluster2Members = cluster2.Extract(N3).Select(c => c.GetMembers().Select(s => s.Value)).ToArray();
-                for (var k = 0; k < N3; k++)
+                var cluster2Members = cluster2.Extract(NOut).Select(c => c.SelectMany()).ToArray();
+                for (var k = 0; k < NOut; k++)
                 {
                     for (var j = 0; j < _spatialPoolerList2[i].Count; j++)
                     {
@@ -197,7 +193,7 @@ namespace Detector
                 _transitions3[m3] = new double[count, count];
                 _probabilities3[m3] = new double[count, count];
                 _distances3[m3] = new double[count, count];
-                _membership3TP[m3] = new int[count, N2];
+                _membership3TP[m3] = new int[count, NOut];
             }
             // Level 3 の Temporal Pooling
             for (var i = 0; i < M3; i++)
@@ -214,13 +210,13 @@ namespace Detector
                 {
                     for (var k = 0; k < n; k++)
                     {
-                        _distances3[i][j, k] = 1 - (_probabilities3[i][j, k] + _probabilities3[i][k, j])/2;
+                        _distances3[i][j, k] = 1 - (_probabilities3[i][j, k] + _probabilities3[i][k, j]) / 2;
                     }
                 }
                 // クラスタリング
                 var cluster3 = AggregativeHierarchicalClustering(Enumerable.Range(0, _spatialPoolerList3[i].Count).ToArray(), (j, k) => _distances3[i][j, k], Metrics.Shortest);
-                var cluster3Members = cluster3.Extract(N2).Select(c => c.GetMembers().Select(s => s.Value)).ToArray();
-                for (var k = 0; k < N2; k++)
+                var cluster3Members = cluster3.Extract(NOut).Select(c => c.SelectMany()).ToArray();
+                for (var k = 0; k < NOut; k++)
                 {
                     for (var j = 0; j < _spatialPoolerList3[i].Count; j++)
                     {
@@ -241,7 +237,7 @@ namespace Detector
         public void ClusterSeries()
         {
             var cluster = AggregativeHierarchicalClustering(Enumerable.Range(0, _relationships.GetLength(0)).ToArray(), (i, j) => _relationships[i, j], Metrics.GroupAverage);
-            var cluster1Members = cluster.Extract(8).Select(c => c.GetMembers().Select(s => s.Value)).ToArray();
+            var cluster1Members = cluster.Extract(8).Select(c => c.SelectMany()).ToArray();
             var order = cluster1Members.SelectMany(i => i).ToArray();
             var memberships = new double[38, 8];
             for (var k = 0; k < 8; k++)
@@ -261,7 +257,7 @@ namespace Detector
         private static List<List<int>> _discretizeSeries(List<List<double>> rawSeries)
         {
             var list = new List<List<int>>();
-            var discretizedValues = rawSeries.Select(series => Sampling.CalcSamplePoints(series, N1, true).ToList()).ToList();
+            var discretizedValues = rawSeries.Select(series => Sampling.CalcSamplePoints(series, NIn, true).ToList()).ToList();
             for (var i = 0; i < rawSeries.Count; i++)
             {
                 var discretizedSeries = new List<int>();

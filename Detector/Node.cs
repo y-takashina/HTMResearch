@@ -15,23 +15,30 @@ namespace Detector
 {
     public class Node
     {
+        private readonly int _numberTemporalGroup;
+
+        /// <summary>
+        /// alias of _numberTemporalGroup
+        /// </summary>
+        private int M => _numberTemporalGroup;
+
+        private int N => SpatialPooler?.Count ?? 0;
+
         public IEnumerable<int> Stream { get; set; }
         public List<int> SpatialPooler { get; set; }
-        public List<int> TemporalPooler { get; set; }
         public IEnumerable<Node> ChildNodes { get; set; }
         public int[,] Membership { get; set; }
-
 
         public Node(IEnumerable<int> inputStream, int numberTemporalGroup)
         {
             Stream = inputStream;
-            TemporalPooler = new int[numberTemporalGroup].ToList();
+            _numberTemporalGroup = numberTemporalGroup;
         }
 
         public Node(IEnumerable<Node> childNodes, int numberTemporalGroup)
         {
             ChildNodes = childNodes;
-            TemporalPooler = new int[numberTemporalGroup].ToList();
+            _numberTemporalGroup = numberTemporalGroup;
         }
 
         /// <summary>
@@ -41,7 +48,7 @@ namespace Detector
         /// </summary>
         public int[] Forward(int[] input)
         {
-            if (input.Length != SpatialPooler.Count) throw new IndexOutOfRangeException("Feedforward input to a node must have the same length as its spatial pooler.");
+            if (input.Length != N) throw new IndexOutOfRangeException("Feedforward input to a node must have the same length as the node's spatial pooler.");
             return Membership.T().Mul(input);
         }
 
@@ -50,43 +57,42 @@ namespace Detector
         /// soft なクラスタ割り当てを上に出力する。
         /// 主に推論時に使う。
         /// </summary>
-        public List<double> Forward(List<double> input)
+        public double[] Forward(double[] input)
         {
-            if (input.Count != SpatialPooler.Count) throw new IndexOutOfRangeException("Feedforward input to a node must have the same length as its spatial pooler.");
+            if (input.Length != N) throw new IndexOutOfRangeException("Feedforward input to a node must have the same length as the node's spatial pooler.");
+            var temporalGroup = Enumerable.Range(0, M).Select(i => Enumerable.Range(0, N).Select(j => input[j] * Membership[j, i]).Max()).Normalize();
+            return temporalGroup;
+        }
+
+        public int[] Backward(int[] input)
+        {
+            if (input.Length != M) throw new IndexOutOfRangeException("Feedback input to a node must have the same length as the node's temporal pooler.");
             throw new NotImplementedException();
         }
 
-        public List<int> Backward(List<int> input)
+        public double[] Backward(double[] input)
         {
-            if (input.Count != TemporalPooler.Count) throw new IndexOutOfRangeException("Feedback input to a node must have the same length as its spatial pooler.");
-            throw new NotImplementedException();
-        }
-
-        public List<double> Backward(List<double> input)
-        {
-            if (input.Count != TemporalPooler.Count) throw new IndexOutOfRangeException("Feedback input to a node must have the same length as its spatial pooler.");
+            if (input.Length != M) throw new IndexOutOfRangeException("Feedback input to a node must have the same length as the node's temporal pooler.");
             throw new NotImplementedException();
         }
 
         public void Learn()
         {
             SpatialPooler = Stream.Distinct().ToList();
-            var m = TemporalPooler.Count;
-            var n = SpatialPooler.Count;
 
-            var transitions = new double[n, n];
-            foreach (var (src, dst) in Stream.Take(n - 1).Zip(Stream.Skip(1), Tuple.Create))
+            var transitions = new double[N, N];
+            foreach (var (src, dst) in Stream.Take(Stream.Count() - 1).Zip(Stream.Skip(1), Tuple.Create))
             {
                 transitions[SpatialPooler.IndexOf(src), SpatialPooler.IndexOf(dst)]++;
             }
             var probabilities = transitions.NormalizeToRaw();
-            var distances = probabilities.Add(probabilities.T());
-            var cluster = AggregativeHierarchicalClustering(Enumerable.Range(0, n), (i, j) => distances[i, j], Metrics.GroupAverage);
-            var clusterwiseMembers = cluster.Extract(m).Select(c => c.GetMembers().Select(s => s.Value)).ToArray();
-            Membership = new int[n, m];
-            for (var i = 0; i < n; i++)
+            var distances = probabilities.Add(probabilities.T()).Mul(-1);
+            var cluster = AggregativeHierarchicalClustering(Enumerable.Range(0, N), (i, j) => distances[i, j], Metrics.GroupAverage);
+            var clusterwiseMembers = cluster.Extract(M).Select(c => c.SelectMany()).ToArray();
+            Membership = new int[N, M];
+            for (var i = 0; i < N; i++)
             {
-                for (var j = 0; j < m; j++)
+                for (var j = 0; j < M; j++)
                 {
                     Membership[i, j] = clusterwiseMembers[j].Contains(i) ? 1 : 0;
                 }

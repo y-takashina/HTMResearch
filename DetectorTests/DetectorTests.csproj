@@ -54,6 +54,7 @@
     <Compile Include="DetectorForWTPTests.cs" />
     <Compile Include="GaussianDetectorTests.cs" />
     <Compile Include="HTMDetectorTests.cs" />
+    <Compile Include="NodeTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -64,6 +65,10 @@
     <ProjectReference Include="..\MatViz\MatViz.csproj">
       <Project>{B6F077BC-DAD9-4FF2-B831-1C79BA2E790B}</Project>
       <Name>MatViz</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\PipExtensions\PipExtensions.csproj">
+      <Project>{7728f4cf-46af-437c-802a-62edbf7c5154}</Project>
+      <Name>PipExtensions</Name>
     </ProjectReference>
   </ItemGroup>
   <Choose>

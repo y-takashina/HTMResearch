@@ -58,7 +58,7 @@ namespace Detector
         public void Learn()
         {
             // 遷移のカウント
-            for (var i = 0; i < _series.Length/2; i++)
+            for (var i = 0; i < _series.Length / 2; i++)
             {
                 _transitions1[_series[i], _series[i + 1]] += 1;
             }
@@ -68,12 +68,12 @@ namespace Detector
             {
                 for (var k = 0; k < N1; k++)
                 {
-                    _distances1[j, k] = 1 - (_probabilities1[j, k] + _probabilities1[k, j])/2;
+                    _distances1[j, k] = 1 - (_probabilities1[j, k] + _probabilities1[k, j]) / 2;
                 }
             }
             // Level 1 の Level 2 に対する帰属度
             var cluster1 = Clustering.Clustering.AggregativeHierarchicalClustering(Enumerable.Range(0, N1).ToArray(), (j, k) => _distances1[j, k], Metrics.GroupAverage);
-            var cluster1Members = cluster1.Extract(N2).Select(c => c.GetMembers().Select(s => s.Value)).ToArray();
+            var cluster1Members = cluster1.Extract(N2).Select(c => c.SelectMany()).ToArray();
             for (var k = 0; k < N2; k++)
             {
                 var sum = cluster1Members[k].Count();
@@ -100,12 +100,12 @@ namespace Detector
             {
                 for (var k = 0; k < N2; k++)
                 {
-                    _distances2[j, k] = 1 - (_probabilities2[j, k] + _probabilities2[k, j])/2;
+                    _distances2[j, k] = 1 - (_probabilities2[j, k] + _probabilities2[k, j]) / 2;
                 }
             }
             // Level 2 の Level 3 に対する帰属度
             var cluster2 = Clustering.Clustering.AggregativeHierarchicalClustering(Enumerable.Range(0, N2).ToArray(), (j, k) => _distances2[j, k], Metrics.GroupAverage);
-            var cluster2Members = cluster2.Extract(N3).Select(c => c.GetMembers().Select(s => s.Value)).ToArray();
+            var cluster2Members = cluster2.Extract(N3).Select(c => c.SelectMany()).ToArray();
             for (var k = 0; k < N3; k++)
             {
                 var sum = cluster2Members[k].Count();
@@ -120,7 +120,7 @@ namespace Detector
             {
                 for (var k = 0; k < N3; k++)
                 {
-                    _distances3[j, k] = 1 - (_probabilities3[j, k] + _probabilities3[k, j])/2;
+                    _distances3[j, k] = 1 - (_probabilities3[j, k] + _probabilities3[k, j]) / 2;
                 }
             }
         }
@@ -130,33 +130,33 @@ namespace Detector
             _predictionEntropySeriesHTM = new double[_series.Length];
             _predictionEntropySeriesFreq = new double[_series.Length];
             // 事前分布
-            var prior1 = Enumerable.Range(0, N1).Select(i => (double) _series.Take(_series.Length/2).Count(v => v == i)/_series.Length*2).ToArray();
+            var prior1 = Enumerable.Range(0, N1).Select(i => (double) _series.Take(_series.Length / 2).Count(v => v == i) / _series.Length * 2).ToArray();
             for (var i = 0; i < prior1.Length; i++) if (prior1[i] < 1e-6) prior1[i] = 1e-6;
             var prior2 = _membership12.T().Mul(prior1);
             var state2 = prior2.Select(x => x).ToArray();
             // 予測
-            for (var i = _series.Length/2; i < _series.Length - 1; i++)
+            for (var i = _series.Length / 2; i < _series.Length - 1; i++)
             {
                 // 状態
                 var state1 = Enumerable.Range(0, N1).Select(j => j == _series[i] ? 1.0 : 1e-6).ToArray();
                 var message1 = _membership12.T().Mul(state1);
                 var message2 = _probabilities2.Mul(state2);
-                for (var j = 0; j < N2; j++) state2[j] = message1[j]*message2[j];
+                for (var j = 0; j < N2; j++) state2[j] = message1[j] * message2[j];
                 var sum = state2.Sum();
-                for (var j = 0; j < N2; j++) state2[j] = state2[j]/sum;
+                for (var j = 0; j < N2; j++) state2[j] = state2[j] / sum;
                 var prediction = _membership12.Mul(_probabilities2.Mul(state2));
                 _predictionEntropySeriesHTM[i + 1] = -Math.Log(prediction[_series[i + 1]], 2);
                 _predictionEntropySeriesFreq[i + 1] = -Math.Log(prior1[_series[i + 1]], 2);
             }
             // 並べ替えて表示云々
             //var c1 = Clustering.AggregativeHierarchicalClusteringByName(Enumerable.Range(0, N1).ToArray(), (j, k) => distances1Mean[j, k], Clustering.AHCType.GroupAverage);
-            //var cluster1Order = c1.Extract(N2).Select(c => c.GetMembers().Select(s => s.Value)).SelectMany(i => i).ToArray();
+            //var cluster1Order = c1.Extract(N2).Select(c => c.SelectMany().Select(s => s.Value)).SelectMany(i => i).ToArray();
             //distances1Mean = distances1Mean.OrderRaws(cluster1Order);
             //distances1Mean = distances1Mean.OrderCols(cluster1Order);
             //distances1Min = distances1Min.OrderRaws(cluster1Order);
             //distances1Min = distances1Min.OrderCols(cluster1Order);
             //_membership12 = _membership12.OrderRaws(cluster1Order);
-            //c1.Extract(N2).Select(c => c.GetMembers()).ForEach((singles, idx) => Console.WriteLine(idx + ": " + singles.Select(s => s.Value).Concatenate()));
+            //c1.Extract(N2).Select(c => c.SelectMany()).ForEach((singles, idx) => Console.WriteLine(idx + ": " + singles.Select(s => s.Value).Concatenate()));
             //cluster1Order.ForEach(x => Console.Write(x + ", "));
         }
 
