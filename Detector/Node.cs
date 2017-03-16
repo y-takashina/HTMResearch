@@ -82,7 +82,7 @@ namespace Detector
             SpatialPooler = Stream.Distinct().ToList();
 
             var transitions = new double[N, N];
-            foreach (var (src, dst) in Stream.Take(N - 1).Zip(Stream.Skip(1), Tuple.Create))
+            foreach (var (src, dst) in Stream.Take(Stream.Count() - 1).Zip(Stream.Skip(1), Tuple.Create))
             {
                 transitions[SpatialPooler.IndexOf(src), SpatialPooler.IndexOf(dst)]++;
             }
