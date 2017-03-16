@@ -53,7 +53,21 @@ namespace Detector
             NumberTemporalGroup = numberTemporalGroup;
         }
 
-        public override void Learn() {}
+        public IEnumerable<int> PullStream()
+        {
+            var childStreams = ChildNodes.Select(node => node.Stream.Select(v =>
+            {
+                var vec = new int[node.N];
+                vec[v] = 1;
+                return node.Forward(vec);
+            }));
+            throw new NotImplementedException();
+        }
+
+        public override void Learn()
+        {
+            ChildNodes.ForEach(node => node.Learn());
+        }
     }
 
     public abstract class Node
@@ -61,11 +75,11 @@ namespace Detector
         protected int NumberTemporalGroup;
 
         /// <summary>
-        /// alias of _numberTemporalGroup
+        /// alias of NumberTemporalGroup
         /// </summary>
-        protected int M => NumberTemporalGroup;
+        public int M => NumberTemporalGroup;
 
-        protected int N => SpatialPooler?.Count ?? 0;
+        public int N => SpatialPooler?.Count ?? 0;
 
         public IEnumerable<int> Stream { get; set; }
         public List<int> SpatialPooler { get; set; }
