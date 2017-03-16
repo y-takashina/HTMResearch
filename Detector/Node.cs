@@ -20,6 +20,29 @@ namespace Detector
             Stream = inputStream;
             NumberTemporalGroup = numberTemporalGroup;
         }
+
+        public override void Learn()
+        {
+            SpatialPooler = Stream.Distinct().ToList();
+
+            var transitions = new double[N, N];
+            foreach (var (src, dst) in Stream.Take(Stream.Count() - 1).Zip(Stream.Skip(1), Tuple.Create))
+            {
+                transitions[SpatialPooler.IndexOf(src), SpatialPooler.IndexOf(dst)]++;
+            }
+            var probabilities = transitions.NormalizeToRaw();
+            var distances = probabilities.Add(probabilities.T()).Mul(-1);
+            var cluster = AggregativeHierarchicalClustering(Enumerable.Range(0, N), (i, j) => distances[i, j], Metrics.GroupAverage);
+            var clusterwiseMembers = cluster.Extract(M).Select(c => c.SelectMany()).ToArray();
+            Membership = new int[N, M];
+            for (var i = 0; i < N; i++)
+            {
+                for (var j = 0; j < M; j++)
+                {
+                    Membership[i, j] = clusterwiseMembers[j].Contains(i) ? 1 : 0;
+                }
+            }
+        }
     }
 
     public class InternalNode : Node
@@ -29,9 +52,11 @@ namespace Detector
             ChildNodes = childNodes;
             NumberTemporalGroup = numberTemporalGroup;
         }
+
+        public override void Learn() {}
     }
 
-    public class Node
+    public abstract class Node
     {
         protected int NumberTemporalGroup;
 
@@ -82,28 +107,7 @@ namespace Detector
             throw new NotImplementedException();
         }
 
-        public void Learn()
-        {
-            SpatialPooler = Stream.Distinct().ToList();
-
-            var transitions = new double[N, N];
-            foreach (var (src, dst) in Stream.Take(Stream.Count() - 1).Zip(Stream.Skip(1), Tuple.Create))
-            {
-                transitions[SpatialPooler.IndexOf(src), SpatialPooler.IndexOf(dst)]++;
-            }
-            var probabilities = transitions.NormalizeToRaw();
-            var distances = probabilities.Add(probabilities.T()).Mul(-1);
-            var cluster = AggregativeHierarchicalClustering(Enumerable.Range(0, N), (i, j) => distances[i, j], Metrics.GroupAverage);
-            var clusterwiseMembers = cluster.Extract(M).Select(c => c.SelectMany()).ToArray();
-            Membership = new int[N, M];
-            for (var i = 0; i < N; i++)
-            {
-                for (var j = 0; j < M; j++)
-                {
-                    Membership[i, j] = clusterwiseMembers[j].Contains(i) ? 1 : 0;
-                }
-            }
-        }
+        public abstract void Learn();
 
         public void Predict()
         {

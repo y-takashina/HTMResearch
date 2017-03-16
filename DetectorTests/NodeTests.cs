@@ -13,11 +13,19 @@ namespace Detector.Tests
     public class NodeTests
     {
         private readonly Node _node;
+        private readonly Node _tree;
 
         public NodeTests()
         {
             _node = new LeafNode(new List<int> {3, 4, 5, 4, 3, 4, 5, 8, 0, 0}, 2);
             _node.Learn();
+            _tree = new InternalNode(new[]
+            {
+                new LeafNode(new[] {3, 4, 5, 4, 3, 4, 5, 8, 0, 0}, 2),
+                new LeafNode(new[] {1, 2, 1, 2, 5, 5, 1, 2, 1, 2}, 2),
+                new LeafNode(new[] {1, 1, 1, 1, 2, 2, 2, 2, 0, 0}, 3),
+            }, 2);
+            _tree.Learn();
         }
 
         [TestMethod()]
