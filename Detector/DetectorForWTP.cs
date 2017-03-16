@@ -93,7 +93,7 @@ namespace Detector
                 }
                 // クラスタリング
                 var cluster1 = AggregativeHierarchicalClustering(Enumerable.Range(0, NIn).ToArray(), (j, k) => _distances1[i][j, k], Metrics.GroupAverage);
-                var cluster1Members = cluster1.Extract(NOut).Select(c => c.GetMembers()).ToArray();
+                var cluster1Members = cluster1.Extract(NOut).Select(c => c.SelectMany()).ToArray();
                 for (var k = 0; k < NOut; k++)
                 {
                     for (var j = 0; j < NIn; j++)
@@ -155,7 +155,7 @@ namespace Detector
                 }
                 // クラスタリング
                 var cluster2 = AggregativeHierarchicalClustering(Enumerable.Range(0, _spatialPoolerList2[i].Count).ToArray(), (j, k) => _distances2[i][j, k], Metrics.GroupAverage);
-                var cluster2Members = cluster2.Extract(NOut).Select(c => c.GetMembers()).ToArray();
+                var cluster2Members = cluster2.Extract(NOut).Select(c => c.SelectMany()).ToArray();
                 for (var k = 0; k < NOut; k++)
                 {
                     for (var j = 0; j < _spatialPoolerList2[i].Count; j++)
@@ -215,7 +215,7 @@ namespace Detector
                 }
                 // クラスタリング
                 var cluster3 = AggregativeHierarchicalClustering(Enumerable.Range(0, _spatialPoolerList3[i].Count).ToArray(), (j, k) => _distances3[i][j, k], Metrics.Shortest);
-                var cluster3Members = cluster3.Extract(NOut).Select(c => c.GetMembers()).ToArray();
+                var cluster3Members = cluster3.Extract(NOut).Select(c => c.SelectMany()).ToArray();
                 for (var k = 0; k < NOut; k++)
                 {
                     for (var j = 0; j < _spatialPoolerList3[i].Count; j++)
@@ -237,7 +237,7 @@ namespace Detector
         public void ClusterSeries()
         {
             var cluster = AggregativeHierarchicalClustering(Enumerable.Range(0, _relationships.GetLength(0)).ToArray(), (i, j) => _relationships[i, j], Metrics.GroupAverage);
-            var cluster1Members = cluster.Extract(8).Select(c => c.GetMembers()).ToArray();
+            var cluster1Members = cluster.Extract(8).Select(c => c.SelectMany()).ToArray();
             var order = cluster1Members.SelectMany(i => i).ToArray();
             var memberships = new double[38, 8];
             for (var k = 0; k < 8; k++)
