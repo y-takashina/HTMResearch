@@ -35,8 +35,14 @@ namespace Detector.Tests
         [TestMethod()]
         public void LearnTest()
         {
-            _node.SpatialPooler.ForEach(Console.WriteLine);
-            MatViz.MatViz.SaveMatrixImage(_node.Membership.Cast(v => (double) v), "membership_test");
+            var ans = new[,] {{1, 0}, {1, 0}, {1, 0}, {0, 1}, {0, 1}};
+            for (var i = 0; i < 5; i++)
+            {
+                for (var j = 0; j < 2; j++)
+                {
+                    Assert.AreEqual(ans[i, j], _node.Membership[i, j]);
+                }
+            }
         }
 
         [TestMethod()]

@@ -86,10 +86,9 @@ namespace Detector
                 transitions[SpatialPooler.IndexOf(src), SpatialPooler.IndexOf(dst)]++;
             }
             var probabilities = transitions.NormalizeToRaw();
-            var distances = probabilities.Add(probabilities.T());
+            var distances = probabilities.Add(probabilities.T()).Mul(-1);
             var cluster = AggregativeHierarchicalClustering(Enumerable.Range(0, N), (i, j) => distances[i, j], Metrics.GroupAverage);
             var clusterwiseMembers = cluster.Extract(M).Select(c => c.SelectMany()).ToArray();
-            cluster.Print();
             Membership = new int[N, M];
             for (var i = 0; i < N; i++)
             {
