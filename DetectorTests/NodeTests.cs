@@ -21,7 +21,7 @@ namespace Detector.Tests
         }
 
         [TestMethod()]
-        public void ForwardTest()
+        public void ForwardHardTest()
         {
             var inputs = new[]
             {
@@ -43,7 +43,7 @@ namespace Detector.Tests
         }
 
         [TestMethod()]
-        public void ForwardTest1()
+        public void ForwardSoftTest()
         {
             var inputs = new[]
             {
@@ -63,13 +63,13 @@ namespace Detector.Tests
         }
 
         [TestMethod()]
-        public void BackwardTest()
+        public void BackwardHardTest()
         {
             Assert.Fail();
         }
 
         [TestMethod()]
-        public void BackwardTest1()
+        public void BackwardSoftTest()
         {
             Assert.Fail();
         }
