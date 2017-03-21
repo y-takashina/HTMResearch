@@ -85,7 +85,8 @@ namespace Detector.Tests
         [TestMethod()]
         public void LearnTest()
         {
-            var ans = new[,] {{0, 1}, {0, 1}, {0, 1}, {1, 0}, {1, 0}};
+//            var ans = new[,] {{0, 1}, {0, 1}, {0, 1}, {1, 0}, {1, 0}};
+            var ans = new[,] {{1, 0}, {1, 0}, {1, 0}, {0, 1}, {0, 1},};
             for (var i = 0; i < 5; i++)
             {
                 for (var j = 0; j < 2; j++)

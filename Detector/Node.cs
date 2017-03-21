@@ -17,18 +17,20 @@ namespace Detector
     {
         public LeafNode(IEnumerable<int> inputStream, int numberTemporalGroup)
         {
-            Stream = inputStream;
+            Stream = inputStream.Select(v => new[] {v});
             NumberTemporalGroup = numberTemporalGroup;
         }
 
         public override void Learn()
         {
-            SpatialPooler = Stream.Distinct().ToList();
+            SpatialPooler = Stream.Distinct((v1, v2) => v1.SequenceEqual(v2)).ToList();
 
             var transitions = new double[N, N];
             foreach (var (src, dst) in Stream.Take(Stream.Count() - 1).Zip(Stream.Skip(1), Tuple.Create))
             {
-                transitions[SpatialPooler.IndexOf(src), SpatialPooler.IndexOf(dst)]++;
+                var srcIdx = SpatialPooler.IndexOf<int[]>(src);
+                var dstIdx = SpatialPooler.IndexOf<int[]>(dst);
+                transitions[srcIdx, dstIdx]++;
             }
             var probabilities = transitions.NormalizeToRaw();
             var distances = probabilities.Add(probabilities.T()).Mul(-1);
@@ -43,6 +45,11 @@ namespace Detector
                 }
             }
         }
+
+        public override double[] Predict()
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public class InternalNode : Node
@@ -53,20 +60,29 @@ namespace Detector
             NumberTemporalGroup = numberTemporalGroup;
         }
 
-        public IEnumerable<int> PullStream()
+        public void PullStream()
         {
-            var childStreams = ChildNodes.Select(node => node.Stream.Select(v =>
-            {
-                var vec = new int[node.N];
-                vec[v] = 1;
-                return node.Forward(vec);
-            }));
-            throw new NotImplementedException();
+//            var childStreams = ChildNodes.Select(node => node.Stream.Select(i => node.Forward(MatrixExtensions.OneHot(node.N, i))).ToArray());
+//            var stream = new List<int[]>();
+//            for (var i = 0; i < childStreams.First().Length; i++)
+//            {
+//                var pattern = new List<int>();
+//                foreach (var childStream in childStreams)
+//                {
+//                    pattern.AddRange(childStream[i]);
+//                }
+//                stream.Add(pattern.ToArray());
+//            }
         }
 
         public override void Learn()
         {
             ChildNodes.ForEach(node => node.Learn());
+        }
+
+        public override double[] Predict()
+        {
+            throw new NotImplementedException();
         }
     }
 
@@ -81,8 +97,8 @@ namespace Detector
 
         public int N => SpatialPooler?.Count ?? 0;
 
-        public IEnumerable<int> Stream { get; set; }
-        public List<int> SpatialPooler { get; set; }
+        public IEnumerable<int[]> Stream { get; set; }
+        public List<int[]> SpatialPooler { get; set; }
         public IEnumerable<Node> ChildNodes { get; set; }
         public int[,] Membership { get; set; }
 
@@ -123,9 +139,6 @@ namespace Detector
 
         public abstract void Learn();
 
-        public void Predict()
-        {
-            throw new NotImplementedException();
-        }
+        public abstract double[] Predict();
     }
 }
