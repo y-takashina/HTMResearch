@@ -103,7 +103,6 @@ namespace Detector.Tests
         [TestMethod()]
         public void LearnInternalNodeTest()
         {
-            _tree.Stream.Print();
             var answers = new[,] {{0, 1}, {0, 1}, {0, 1}, {1, 0}};
             for (var i = 0; i < 4; i++)
             {

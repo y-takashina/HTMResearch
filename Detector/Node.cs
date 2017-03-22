@@ -80,10 +80,10 @@ namespace Detector
         public List<int[]> SpatialPooler { get; set; }
         public int[,] Membership { get; set; }
 
-        public int[] Quantize(int[] input)
+        public int[] Quantize(int[] rawInput)
         {
-            if (!SpatialPooler.Any(v => v.SequenceEqual(input))) throw new ArgumentOutOfRangeException("input must have been memoized in SpatialPooer");
-            return OneHot(N, SpatialPooler.IndexOf<int[]>(input));
+            if (!SpatialPooler.Any(v => v.SequenceEqual(rawInput))) throw new ArgumentOutOfRangeException("input must have been memoized in SpatialPooer");
+            return OneHot(N, SpatialPooler.IndexOf<int[]>(rawInput));
         }
 
         /// <summary>
