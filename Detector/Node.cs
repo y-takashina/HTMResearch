@@ -10,6 +10,7 @@ using MoreLinq;
 using Clustering;
 using PipExtensions;
 using static Clustering.Clustering;
+using static PipExtensions.MatrixExtensions;
 
 namespace Detector
 {
@@ -39,7 +40,7 @@ namespace Detector
 
         private IEnumerable<int[]> _pullStreamFromChildren()
         {
-            var childStreams = _childNodes.Select(node => node.Stream.Select(value => node.Forward(MatrixExtensions.OneHot(node.N, node.SpatialPooler.IndexOf<int[]>(value)))).ToArray()).ToArray();
+            var childStreams = _childNodes.Select(node => node.Stream.Select(value => node.Forward(node.Quantize(value))).ToArray()).ToArray();
             var stream = childStreams.First().Select(_ => new List<int>()).ToList();
             foreach (var childStream in childStreams)
             {
@@ -78,6 +79,12 @@ namespace Detector
         public IEnumerable<int[]> Stream { get; set; }
         public List<int[]> SpatialPooler { get; set; }
         public int[,] Membership { get; set; }
+
+        public int[] Quantize(int[] input)
+        {
+            if (!SpatialPooler.Any(v => v.SequenceEqual(input))) throw new ArgumentOutOfRangeException("input must have been memoized in SpatialPooer");
+            return OneHot(N, SpatialPooler.IndexOf<int[]>(input));
+        }
 
         /// <summary>
         /// 1-of-k な値を入力として受け取ったら、
