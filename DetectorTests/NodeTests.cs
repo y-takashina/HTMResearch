@@ -27,9 +27,8 @@ namespace Detector.Tests
                 new LeafNode(new[] {0, 1, 2, 3, 2, 3, 2, 3, 0, 1}, 2),
                 //                  0  0  0  1  0  1  0  1  1  1
                 new LeafNode(new[] {0, 0, 0, 1, 0, 1, 0, 1, 1, 1}, 2),
-                // 000, 010, 011, 101
+                //                  000, 010, 011, 101
                 //                  0  0  1  2  1  2  1  2  3  3
-                //                  0  0  1  1  1  1  1  1  0  0
             }, 2);
             _tree.Learn();
         }
@@ -104,6 +103,7 @@ namespace Detector.Tests
         [TestMethod()]
         public void LearnInternalNodeTest()
         {
+            _tree.Stream.Print();
             var answers = new[,] {{0, 1}, {0, 1}, {0, 1}, {1, 0}};
             for (var i = 0; i < 4; i++)
             {

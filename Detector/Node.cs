@@ -18,7 +18,7 @@ namespace Detector
     {
         public LeafNode(IEnumerable<int> inputStream, int numberTemporalGroup = 8)
         {
-            Stream = inputStream.Select(v => new[] {v});
+            Memoize(inputStream.Select(v => new[] {v}));
             NumberTemporalGroup = numberTemporalGroup;
         }
 
@@ -38,24 +38,24 @@ namespace Detector
             NumberTemporalGroup = numberTemporalGroup;
         }
 
-        private IEnumerable<int[]> _pullStreamFromChildren()
+        private IEnumerable<int[]> _aggregateChildStreams()
         {
-            var childStreams = _childNodes.Select(node => node.Stream.Select(value => node.Forward(node.Quantize(value))).ToArray()).ToArray();
-            var stream = childStreams.First().Select(_ => new List<int>()).ToList();
+            var childStreams = _childNodes.Select(node => node.Stream.Select(i => node.Forward(node.Quantize(node.SpatialPooler[i]))).ToArray()).ToArray();
+            var rawStream = childStreams.First().Select(_ => new List<int>()).ToList();
             foreach (var childStream in childStreams)
             {
                 for (var j = 0; j < childStream.Length; j++)
                 {
-                    stream[j].AddRange(childStream[j]);
+                    rawStream[j].AddRange(childStream[j]);
                 }
             }
-            return stream.Select(value => value.ToArray());
+            return rawStream.Select(value => value.ToArray());
         }
 
         public override void Learn()
         {
             _childNodes.ForEach(node => node.Learn());
-            Stream = _pullStreamFromChildren();
+            Memoize(_aggregateChildStreams());
             base.Learn();
         }
 
@@ -76,7 +76,7 @@ namespace Detector
 
         public int N => SpatialPooler?.Count ?? 0;
 
-        public IEnumerable<int[]> Stream { get; set; }
+        public IEnumerable<int> Stream { get; set; }
         public List<int[]> SpatialPooler { get; set; }
         public int[,] Membership { get; set; }
 
@@ -129,25 +129,15 @@ namespace Detector
                 var memoized = SpatialPooler.Any(memoizedValue => memoizedValue.SequenceEqual(value));
                 if (!memoized) SpatialPooler.Add(value);
             }
-//            Stream = rawStream.Select(value => SpatialPooler.IndexOf<int[]>(value));
+            Stream = rawStream.Select(value => SpatialPooler.IndexOf<int[]>(value));
         }
 
         public virtual void Learn()
         {
-            // SpatialPooler = Stream.Distinct().ToList();
-            SpatialPooler = new List<int[]>();
-            foreach (var value in Stream)
-            {
-                var memoized = SpatialPooler.Any(memoizedValue => memoizedValue.SequenceEqual(value));
-                if (!memoized) SpatialPooler.Add(value);
-            }
-
             var transitions = new double[N, N];
             foreach (var (src, dst) in Stream.Take(Stream.Count() - 1).Zip(Stream.Skip(1), Tuple.Create))
             {
-                var srcIdx = SpatialPooler.IndexOf<int[]>(src);
-                var dstIdx = SpatialPooler.IndexOf<int[]>(dst);
-                transitions[srcIdx, dstIdx]++;
+                transitions[src, dst]++;
             }
             var probabilities = transitions.NormalizeToRaw();
             var distances = probabilities.Add(probabilities.T()).Mul(-1);
