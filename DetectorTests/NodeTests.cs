@@ -104,17 +104,13 @@ namespace Detector.Tests
         [TestMethod()]
         public void LearnInternalNodeTest()
         {
-            var answers = new[,] {{0, 1}, {0, 1}, {1, 0}, {1, 0}};
+            var answers = new[,] {{0, 1}, {0, 1}, {0, 1}, {1, 0}};
             for (var i = 0; i < 4; i++)
             {
                 for (var j = 0; j < 2; j++)
                 {
                     Assert.AreEqual(answers[i, j], _tree.Membership[i, j]);
                 }
-            }
-            foreach (var value in _tree.Stream)
-            {
-                value.Print();
             }
         }
 
