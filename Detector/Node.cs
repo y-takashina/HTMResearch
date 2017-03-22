@@ -39,7 +39,7 @@ namespace Detector
 
         private IEnumerable<int[]> _pullStreamFromChildren()
         {
-            var childStreams = _childNodes.Select(node => node.Stream.Select(node.Forward).ToArray()).ToArray();
+            var childStreams = _childNodes.Select(node => node.Stream.Select(value => node.Forward(MatrixExtensions.OneHot(node.N, node.SpatialPooler.IndexOf<int[]>(value)))).ToArray()).ToArray();
             var stream = childStreams.First().Select(_ => new List<int>()).ToList();
             foreach (var childStream in childStreams)
             {
