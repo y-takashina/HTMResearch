@@ -22,10 +22,7 @@ namespace Detector
             NumberTemporalGroup = numberTemporalGroup;
         }
 
-        public override double[] Predict()
-        {
-            throw new NotImplementedException();
-        }
+        public override double[] Predict(int[] input) => Forward(Quantize(input).Cast<double>().ToArray());
     }
 
     public class InternalNode : Node
@@ -59,7 +56,7 @@ namespace Detector
             base.Learn();
         }
 
-        public override double[] Predict()
+        public override double[] Predict(int[] input)
         {
             throw new NotImplementedException();
         }
@@ -153,6 +150,6 @@ namespace Detector
             }
         }
 
-        public abstract double[] Predict();
+        public abstract double[] Predict(int[] input);
     }
 }
