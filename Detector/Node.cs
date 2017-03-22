@@ -121,6 +121,17 @@ namespace Detector
             throw new NotImplementedException();
         }
 
+        public void Memoize(IEnumerable<int[]> rawStream)
+        {
+            SpatialPooler = new List<int[]>();
+            foreach (var value in rawStream)
+            {
+                var memoized = SpatialPooler.Any(memoizedValue => memoizedValue.SequenceEqual(value));
+                if (!memoized) SpatialPooler.Add(value);
+            }
+//            Stream = rawStream.Select(value => SpatialPooler.IndexOf<int[]>(value));
+        }
+
         public virtual void Learn()
         {
             // SpatialPooler = Stream.Distinct().ToList();
