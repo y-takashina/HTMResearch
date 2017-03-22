@@ -29,15 +29,17 @@ namespace Detector
 
     public class InternalNode : Node
     {
+        private readonly IEnumerable<Node> _childNodes;
+
         public InternalNode(IEnumerable<Node> childNodes, int numberTemporalGroup = 8)
         {
-            ChildNodes = childNodes;
+            _childNodes = childNodes;
             NumberTemporalGroup = numberTemporalGroup;
         }
 
-        private IEnumerable<int[]> _pullStream()
+        private IEnumerable<int[]> _pullStreamFromChildren()
         {
-            var childStreams = ChildNodes.Select(node => node.Stream.Select(node.Forward).ToArray()).ToArray();
+            var childStreams = _childNodes.Select(node => node.Stream.Select(node.Forward).ToArray()).ToArray();
             var stream = childStreams.First().Select(_ => new List<int>()).ToList();
             foreach (var childStream in childStreams)
             {
@@ -51,8 +53,8 @@ namespace Detector
 
         public override void Learn()
         {
-            ChildNodes.ForEach(node => node.Learn());
-            Stream = _pullStream();
+            _childNodes.ForEach(node => node.Learn());
+            Stream = _pullStreamFromChildren();
             base.Learn();
         }
 
@@ -75,7 +77,6 @@ namespace Detector
 
         public IEnumerable<int[]> Stream { get; set; }
         public List<int[]> SpatialPooler { get; set; }
-        public IEnumerable<Node> ChildNodes { get; set; }
         public int[,] Membership { get; set; }
 
         /// <summary>
