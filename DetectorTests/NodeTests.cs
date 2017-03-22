@@ -85,13 +85,12 @@ namespace Detector.Tests
         [TestMethod()]
         public void LearnTest()
         {
-//            var ans = new[,] {{0, 1}, {0, 1}, {0, 1}, {1, 0}, {1, 0}};
-            var ans = new[,] {{1, 0}, {1, 0}, {1, 0}, {0, 1}, {0, 1},};
+            var answers = new[,] {{0, 1}, {0, 1}, {0, 1}, {1, 0}, {1, 0}};
             for (var i = 0; i < 5; i++)
             {
                 for (var j = 0; j < 2; j++)
                 {
-                    Assert.AreEqual(ans[i, j], _node.Membership[i, j]);
+                    Assert.AreEqual(answers[i, j], _node.Membership[i, j]);
                 }
             }
         }

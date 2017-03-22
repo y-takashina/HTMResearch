@@ -23,7 +23,13 @@ namespace Detector
 
         public override void Learn()
         {
-            SpatialPooler = Stream.Distinct((v1, v2) => v1.SequenceEqual(v2)).ToList();
+            // SpatialPooler = Stream.Distinct().ToList();
+            SpatialPooler = new List<int[]>();
+            foreach (var value in Stream)
+            {
+                var memoized = SpatialPooler.Any(memoizedValue => memoizedValue.SequenceEqual(value));
+                if (!memoized) SpatialPooler.Add(value);
+            }
 
             var transitions = new double[N, N];
             foreach (var (src, dst) in Stream.Take(Stream.Count() - 1).Zip(Stream.Skip(1), Tuple.Create))
