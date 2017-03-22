@@ -10,63 +10,55 @@ using MoreLinq;
 using Clustering;
 using PipExtensions;
 using static Clustering.Clustering;
+using static PipExtensions.MatrixExtensions;
 
 namespace Detector
 {
     public class LeafNode : Node
     {
-        public LeafNode(IEnumerable<int> inputStream, int numberTemporalGroup)
+        public LeafNode(IEnumerable<int> inputStream, int numberTemporalGroup = 8)
         {
-            Stream = inputStream;
+            Memoize(inputStream.Select(v => new[] {v}));
             NumberTemporalGroup = numberTemporalGroup;
         }
 
-        public override void Learn()
-        {
-            SpatialPooler = Stream.Distinct().ToList();
-
-            var transitions = new double[N, N];
-            foreach (var (src, dst) in Stream.Take(Stream.Count() - 1).Zip(Stream.Skip(1), Tuple.Create))
-            {
-                transitions[SpatialPooler.IndexOf(src), SpatialPooler.IndexOf(dst)]++;
-            }
-            var probabilities = transitions.NormalizeToRaw();
-            var distances = probabilities.Add(probabilities.T()).Mul(-1);
-            var cluster = AggregativeHierarchicalClustering(Enumerable.Range(0, N), (i, j) => distances[i, j], Metrics.GroupAverage);
-            var clusterwiseMembers = cluster.Extract(M).Select(c => c.SelectMany()).ToArray();
-            Membership = new int[N, M];
-            for (var i = 0; i < N; i++)
-            {
-                for (var j = 0; j < M; j++)
-                {
-                    Membership[i, j] = clusterwiseMembers[j].Contains(i) ? 1 : 0;
-                }
-            }
-        }
+        public override double[] Predict(int[] input) => Forward(Quantize(input).Cast<double>().ToArray());
     }
 
     public class InternalNode : Node
     {
-        public InternalNode(IEnumerable<Node> childNodes, int numberTemporalGroup)
+        private readonly IEnumerable<Node> _childNodes;
+
+        public InternalNode(IEnumerable<Node> childNodes, int numberTemporalGroup = 8)
         {
-            ChildNodes = childNodes;
+            _childNodes = childNodes;
             NumberTemporalGroup = numberTemporalGroup;
         }
 
-        public IEnumerable<int> PullStream()
+        private IEnumerable<int[]> _aggregateChildStreams()
         {
-            var childStreams = ChildNodes.Select(node => node.Stream.Select(v =>
+            var childStreams = _childNodes.Select(node => node.Stream.Select(i => node.Forward(node.Quantize(node.SpatialPooler[i]))).ToArray()).ToArray();
+            var rawStream = childStreams.First().Select(_ => new List<int>()).ToList();
+            foreach (var childStream in childStreams)
             {
-                var vec = new int[node.N];
-                vec[v] = 1;
-                return node.Forward(vec);
-            }));
-            throw new NotImplementedException();
+                for (var j = 0; j < childStream.Length; j++)
+                {
+                    rawStream[j].AddRange(childStream[j]);
+                }
+            }
+            return rawStream.Select(value => value.ToArray());
         }
 
         public override void Learn()
         {
-            ChildNodes.ForEach(node => node.Learn());
+            _childNodes.ForEach(node => node.Learn());
+            Memoize(_aggregateChildStreams());
+            base.Learn();
+        }
+
+        public override double[] Predict(int[] input)
+        {
+            throw new NotImplementedException();
         }
     }
 
@@ -82,9 +74,14 @@ namespace Detector
         public int N => SpatialPooler?.Count ?? 0;
 
         public IEnumerable<int> Stream { get; set; }
-        public List<int> SpatialPooler { get; set; }
-        public IEnumerable<Node> ChildNodes { get; set; }
+        public List<int[]> SpatialPooler { get; set; }
         public int[,] Membership { get; set; }
+
+        public int[] Quantize(int[] rawInput)
+        {
+            if (!SpatialPooler.Any(v => v.SequenceEqual(rawInput))) throw new ArgumentOutOfRangeException("input must have been memoized in SpatialPooer");
+            return OneHot(N, SpatialPooler.IndexOf<int[]>(rawInput));
+        }
 
         /// <summary>
         /// 1-of-k な値を入力として受け取ったら、
@@ -121,11 +118,38 @@ namespace Detector
             throw new NotImplementedException();
         }
 
-        public abstract void Learn();
-
-        public void Predict()
+        public void Memoize(IEnumerable<int[]> rawStream)
         {
-            throw new NotImplementedException();
+            SpatialPooler = new List<int[]>();
+            foreach (var value in rawStream)
+            {
+                var memoized = SpatialPooler.Any(memoizedValue => memoizedValue.SequenceEqual(value));
+                if (!memoized) SpatialPooler.Add(value);
+            }
+            Stream = rawStream.Select(value => SpatialPooler.IndexOf<int[]>(value));
         }
+
+        public virtual void Learn()
+        {
+            var transitions = new double[N, N];
+            foreach (var (src, dst) in Stream.Take(Stream.Count() - 1).Zip(Stream.Skip(1), Tuple.Create))
+            {
+                transitions[src, dst]++;
+            }
+            var probabilities = transitions.NormalizeToRaw();
+            var distances = probabilities.Add(probabilities.T()).Mul(-1);
+            var cluster = AggregativeHierarchicalClustering(Enumerable.Range(0, N), (i, j) => distances[i, j], Metrics.GroupAverage);
+            var clusterwiseMembers = cluster.Extract(M).Select(c => c.SelectMany()).ToArray();
+            Membership = new int[N, M];
+            for (var i = 0; i < N; i++)
+            {
+                for (var j = 0; j < M; j++)
+                {
+                    Membership[i, j] = clusterwiseMembers[j].Contains(i) ? 1 : 0;
+                }
+            }
+        }
+
+        public abstract double[] Predict(int[] input);
     }
 }

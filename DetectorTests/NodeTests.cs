@@ -21,10 +21,15 @@ namespace Detector.Tests
             _node.Learn();
             _tree = new InternalNode(new[]
             {
-                new LeafNode(new[] {3, 4, 5, 4, 3, 4, 5, 8, 0, 0}, 2),
-                new LeafNode(new[] {1, 2, 1, 2, 5, 5, 1, 2, 1, 2}, 2),
-                new LeafNode(new[] {1, 1, 1, 1, 2, 2, 2, 2, 0, 0}, 3),
+                //                  0  0  0  0  0  0  0  0  1  1
+                new LeafNode(new[] {0, 1, 0, 1, 0, 1, 0, 1, 2, 2}, 2),
+                //                  0  0  1  1  1  1  1  1  0  0
+                new LeafNode(new[] {0, 1, 2, 3, 2, 3, 2, 3, 0, 1}, 2),
+                //                  0  0  0  1  0  1  0  1  1  1
+                new LeafNode(new[] {0, 0, 0, 1, 0, 1, 0, 1, 1, 1}, 2),
             }, 2);
+            //                      000, 010, 011, 101
+            //                      0  0  1  2  1  2  1  2  3  3
             _tree.Learn();
         }
 
@@ -85,12 +90,25 @@ namespace Detector.Tests
         [TestMethod()]
         public void LearnTest()
         {
-            var ans = new[,] {{0, 1}, {0, 1}, {0, 1}, {1, 0}, {1, 0}};
+            var answers = new[,] {{0, 1}, {0, 1}, {0, 1}, {1, 0}, {1, 0}};
             for (var i = 0; i < 5; i++)
             {
                 for (var j = 0; j < 2; j++)
                 {
-                    Assert.AreEqual(ans[i, j], _node.Membership[i, j]);
+                    Assert.AreEqual(answers[i, j], _node.Membership[i, j]);
+                }
+            }
+        }
+
+        [TestMethod()]
+        public void LearnInternalNodeTest()
+        {
+            var answers = new[,] {{0, 1}, {0, 1}, {0, 1}, {1, 0}};
+            for (var i = 0; i < 4; i++)
+            {
+                for (var j = 0; j < 2; j++)
+                {
+                    Assert.AreEqual(answers[i, j], _tree.Membership[i, j]);
                 }
             }
         }
