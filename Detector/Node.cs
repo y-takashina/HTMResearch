@@ -28,7 +28,7 @@ namespace Detector
     {
         private readonly IEnumerable<Node> _childNodes;
 
-        public InternalNode(IEnumerable<Node> childNodes, int numberTemporalGroup = 8, Func<(double, int), (double, int), double> metrics = null) : base(numberTemporalGroup, metrics)
+        public InternalNode(IEnumerable<Node> childNodes, int numberTemporalGroup, Func<(double, int), (double, int), double> metrics = null) : base(numberTemporalGroup, metrics)
         {
             _childNodes = childNodes;
         }
@@ -139,6 +139,7 @@ namespace Detector
             var stream = Stream.ToArray();
             for (var i = 0; i < stream.Length - 1; i++)
             {
+                //if (double.IsNaN(stream[i]) || double.IsNaN(stream[i + 1])) continue;
                 transitions[stream[i], stream[i + 1]]++;
             }
             var probabilities = transitions.NormalizeToRaw();
