@@ -16,7 +16,7 @@ namespace Detector
 {
     public class LeafNode : Node
     {
-        public LeafNode(IEnumerable<int> inputStream, int numberTemporalGroup = 8, Func<(double, int), (double, int), double> metrics = null) : base(numberTemporalGroup, metrics)
+        public LeafNode(IEnumerable<int> inputStream, int numberTemporalGroup, Func<(double, int), (double, int), double> metrics = null) : base(numberTemporalGroup, metrics)
         {
             Memoize(inputStream.Select(v => new[] {v}));
         }
@@ -136,9 +136,10 @@ namespace Detector
         public virtual void Learn()
         {
             var transitions = new double[N, N];
-            foreach (var (src, dst) in Stream.Take(Stream.Count() - 1).Zip(Stream.Skip(1), Tuple.Create))
+            var stream = Stream.ToArray();
+            for (var i = 0; i < stream.Length - 1; i++)
             {
-                transitions[src, dst]++;
+                transitions[stream[i], stream[i + 1]]++;
             }
             var probabilities = transitions.NormalizeToRaw();
             var distances = probabilities.Add(probabilities.T()).Mul(-1);
