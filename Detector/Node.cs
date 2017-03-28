@@ -16,9 +16,9 @@ namespace Detector
 {
     public class LeafNode : Node
     {
-        public LeafNode(IEnumerable<int> inputStream, int numberTemporalGroup, Func<(double, int), (double, int), double> metrics = null) : base(numberTemporalGroup, metrics)
+        public LeafNode(IEnumerable<int> trainStream, int numberTemporalGroup, Func<(double, int), (double, int), double> metrics = null) : base(numberTemporalGroup, metrics)
         {
-            Memoize(inputStream.Select(v => new[] {v}));
+            Memoize(trainStream.Select(v => new[] {v}));
         }
 
         public override double[] Predict(int[] input) => Forward(Quantize(input).Cast<double>().ToArray());
