@@ -16,9 +16,9 @@ namespace Detector
 {
     public class LeafNode : Node
     {
-        public LeafNode(IEnumerable<int> inputStream, int numberTemporalGroup = 8, Func<(double, int), (double, int), double> metrics = null) : base(numberTemporalGroup, metrics)
+        public LeafNode(IEnumerable<int> trainStream, int numberTemporalGroup, Func<(double, int), (double, int), double> metrics = null) : base(numberTemporalGroup, metrics)
         {
-            Memoize(inputStream.Select(v => new[] {v}));
+            Memoize(trainStream.Select(v => new[] {v}));
         }
 
         public override double[] Predict(int[] input) => Forward(Quantize(input).Cast<double>().ToArray());
@@ -28,7 +28,7 @@ namespace Detector
     {
         private readonly IEnumerable<Node> _childNodes;
 
-        public InternalNode(IEnumerable<Node> childNodes, int numberTemporalGroup = 8, Func<(double, int), (double, int), double> metrics = null) : base(numberTemporalGroup, metrics)
+        public InternalNode(IEnumerable<Node> childNodes, int numberTemporalGroup, Func<(double, int), (double, int), double> metrics = null) : base(numberTemporalGroup, metrics)
         {
             _childNodes = childNodes;
         }
@@ -136,9 +136,11 @@ namespace Detector
         public virtual void Learn()
         {
             var transitions = new double[N, N];
-            foreach (var (src, dst) in Stream.Take(Stream.Count() - 1).Zip(Stream.Skip(1), Tuple.Create))
+            var stream = Stream.ToArray();
+            for (var i = 0; i < stream.Length - 1; i++)
             {
-                transitions[src, dst]++;
+                //if (double.IsNaN(stream[i]) || double.IsNaN(stream[i + 1])) continue;
+                transitions[stream[i], stream[i + 1]]++;
             }
             var probabilities = transitions.NormalizeToRaw();
             var distances = probabilities.Add(probabilities.T()).Mul(-1);
