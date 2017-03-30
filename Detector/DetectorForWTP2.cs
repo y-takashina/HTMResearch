@@ -16,25 +16,28 @@ namespace Detector
         {
             var streams = _discretizeSeries(rawSeries).ToArray();
 
-/*
+//*
             var relationships = MutualInformationMatrix(streams);
-            MatViz.MatViz.SaveMatrixImage(relationships, "relationships");
+//            MatViz.MatViz.SaveMatrixImage(relationships, "relationships");
             var rootCluster = Clustering.Clustering.AggregativeHierarchicalClustering(Enumerable.Range(0, streams.Length), (i, j) => relationships[i, j], Metrics.GroupAverage);
-            var leafNodes = streams.Select(s => new LeafNode(s, 8)).ToArray();
-            var root = searchCluster((rootCluster, null)).node;
+            var leafNodes = streams.Select(s => new LeafNode(s, 4)).ToArray();
+            var n = 6;
+            var root = new InternalNode(new[] {AggregateClusters((rootCluster, null)).node}, 1);
             root.Learn();
-            foreach (var value in root.Stream) Console.WriteLine(value);
-
-            (Cluster<int> cluster, Node node) searchCluster((Cluster<int> cluster, Node node) acc)
+            var streamsByCluster = Enumerable.Range(0, n).Select(k => root.Stream.Select((c, i) => (c, i)).Where(t => t.Item1 == k).Select(t => t.Item2)).OrderByDescending(s => s.Count());
+            for (var i = 0; i < n + 1; i++)
             {
-                if (acc.cluster is Single<int> single) return (null, new InternalNode(new[] {acc.node, leafNodes[single.Value]}, 4));
-                if (acc.cluster is Couple<int> couple)
-                {
-                    var left = searchCluster((couple.Left, null));
-                    var right = searchCluster((couple.Right, null));
-                    return (null, new InternalNode(new[] {left.node, right.node}, 4));
-                }
-                return acc;
+                var pr = _calcPR(streamsByCluster.Skip(i));
+                Console.WriteLine($"Precision: {pr.Item1,-6:f4}, Recall: {pr.Item2,-6:f4}");
+            }
+
+            (Cluster<int> cluster, Node node) AggregateClusters((Cluster<int> cluster, Node node) acc)
+            {
+                if (acc.cluster is Single<int> single) return (null, leafNodes[single.Value]);
+                var couple = (Couple<int>) acc.cluster;
+                var left = AggregateClusters((couple.Left, null)).node;
+                var right = AggregateClusters((couple.Right, null)).node;
+                return (null, new InternalNode(new[] {left, right}, n, Metrics.GroupAverage));
             }
 
 //*/
@@ -84,7 +87,7 @@ namespace Detector
                 }
             }
 //*/
-//*
+/*
             var nFinalCluster = 6;
             var level1Nodes = streams.Select(stream => new LeafNode(stream, 8, Metrics.GroupAverage));
             var level2Nodes = Enumerable.Range(0, 6).Select(i =>
