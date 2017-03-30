@@ -30,6 +30,8 @@ namespace Detector
 
         public InternalNode(IEnumerable<Node> childNodes, int numberTemporalGroup, Func<(double, int), (double, int), double> metrics = null) : base(numberTemporalGroup, metrics)
         {
+            if (childNodes == null) throw new NullReferenceException("`childNodes` is null.");
+            if (childNodes.Contains(null)) throw new NullReferenceException("`childNodes` contains null.");
             _childNodes = childNodes;
         }
 
