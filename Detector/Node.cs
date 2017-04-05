@@ -16,12 +16,22 @@ namespace Detector
 {
     public class LeafNode : Node
     {
-        public LeafNode(IEnumerable<int> trainStream, int numberTemporalGroup, Func<(double, int), (double, int), double> metrics = null) : base(numberTemporalGroup, metrics)
+        public IEnumerable<int> TestStream { get; private set; }
+
+        public LeafNode(IEnumerable<int> trainStream, IEnumerable<int> testStream, int numberTemporalGroup, Func<(double, int), (double, int), double> metrics = null) : base(numberTemporalGroup, metrics)
         {
             Memoize(trainStream.Select(v => new[] {v}));
+            TestStream = testStream;
         }
 
-        public override double[] Predict(int[] input) => Forward(Quantize(input).Cast<double>().ToArray());
+        public override double[] Predict()
+        {
+            if (!TestStream.Any()) throw new NullReferenceException("Cannot predict anything. TestStream is empty.");
+            var input = new[] {TestStream.First()}.Select(v => (double) v).ToArray();
+            TestStream = TestStream.Skip(1);
+            var temporalGroup = Enumerable.Range(0, M).Select(i => input.Select((v, j) => v * Membership[j, i]).Max()).Normalize();
+            return temporalGroup;
+        }
     }
 
     public class InternalNode : Node
@@ -37,13 +47,13 @@ namespace Detector
 
         private IEnumerable<int[]> _aggregateChildStreams()
         {
-            var childStreams = _childNodes.Select(node => node.Stream.Select(i => node.Forward(OneHot(node.N, i))).ToArray()).ToArray();
+            var childStreams = _childNodes.Select(node => node.Stream.ToArray());
             var rawStream = childStreams.First().Select(_ => new List<int>()).ToList();
             foreach (var childStream in childStreams)
             {
                 for (var j = 0; j < childStream.Length; j++)
                 {
-                    rawStream[j].AddRange(childStream[j]);
+                    rawStream[j].Add(childStream[j]);
                 }
             }
             return rawStream.Select(value => value.ToArray());
@@ -56,9 +66,32 @@ namespace Detector
             base.Learn();
         }
 
-        public override double[] Predict(int[] input)
+        public override double[] Predict()
         {
-            throw new NotImplementedException();
+            var childOutputs = _childNodes.Select(node => node.Predict()).ToArray();
+            var coincidence = new double[N];
+            for (var i = 0; i < N; i++)
+            {
+                coincidence[i] = 1.0;
+                for (var j = 0; j < SpatialPooler[i].Length; j++)
+                {
+                    coincidence[i] *= childOutputs[j][SpatialPooler[i][j]];
+                }
+            }
+//            var coincidence = SpatialPooler.Select(pattern => pattern.Select((childIndex, i) => childOutputs[i][childIndex]).Aggregate(1.0, (x, y) => x * y)).ToArray();
+//            var coincidence = SpatialPooler.Select((v, i) => v.Select((value, k) => childOutputs[value][k]).Aggregate(1.0, (x, y) => x * y)).ToArray();
+            var temporalGroup = new double[M];
+            for (var j = 0; j < N; j++)
+            {
+                for (var i = 0; i < M; i++)
+                {
+                    if (coincidence[j] > temporalGroup[i])
+                    {
+                        temporalGroup[i] = coincidence[j];
+                    }
+                }
+            }
+            return temporalGroup.Normalize();
         }
     }
 
@@ -83,6 +116,11 @@ namespace Detector
             NumberTemporalGroup = numberTemporalGroup;
         }
 
+        /// <summary>
+        /// 生の入力を受け取り、どの SpatialPooler に属するかを 1-hot ベクトルで返す。
+        /// </summary>
+        /// <param name="rawInput"></param>
+        /// <returns></returns>
         public int[] Quantize(int[] rawInput)
         {
             if (!SpatialPooler.Any(v => v.SequenceEqual(rawInput))) throw new ArgumentOutOfRangeException("input must have been memoized in SpatialPooer");
@@ -97,6 +135,7 @@ namespace Detector
         public int[] Forward(int[] input)
         {
             if (input.Length != N) throw new IndexOutOfRangeException("Feedforward input to a node must have the same length as the node's spatial pooler.");
+            throw new NotImplementedException();
             return Membership.T().Mul(input);
         }
 
@@ -108,8 +147,7 @@ namespace Detector
         public double[] Forward(double[] input)
         {
             if (input.Length != N) throw new IndexOutOfRangeException("Feedforward input to a node must have the same length as the node's spatial pooler.");
-            var temporalGroup = Enumerable.Range(0, M).Select(i => input.Select((v, j) => v * Membership[j, i]).Max()).Normalize();
-            return temporalGroup;
+            throw new NotImplementedException();
         }
 
         public int[] Backward(int[] input)
@@ -141,7 +179,6 @@ namespace Detector
             var stream = Stream.ToArray();
             for (var i = 0; i < stream.Length - 1; i++)
             {
-                //if (double.IsNaN(stream[i]) || double.IsNaN(stream[i + 1])) continue;
                 transitions[stream[i], stream[i + 1]]++;
             }
             var probabilities = transitions.NormalizeToRaw();
@@ -158,6 +195,6 @@ namespace Detector
             }
         }
 
-        public abstract double[] Predict(int[] input);
+        public abstract double[] Predict();
     }
 }

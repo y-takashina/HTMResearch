@@ -19,7 +19,7 @@ namespace Detector
             var discretizedStreams = _discretizeSeries(rawStreams).ToArray();
             var relationships = MutualInformationMatrix(discretizedStreams);
             var rootCluster = Clustering.Clustering.AggregativeHierarchicalClustering(Enumerable.Range(0, discretizedStreams.Length), (i, j) => relationships[i, j], Metrics.GroupAverage);
-            var leafNodes = discretizedStreams.Select(stream => new LeafNode(stream, 4)).ToArray();
+            var leafNodes = discretizedStreams.Select(stream => new LeafNode(stream, null, 4)).ToArray();
             var root = new InternalNode(new[] {AggregateClusters((rootCluster, null)).node}, 1);
             root.Learn();
             var streamsByCluster = Enumerable.Range(0, n).Select(k => root.Stream.Select((c, i) => (c, i)).Where(t => t.Item1 == k).Select(t => t.Item2)).OrderByDescending(s => s.Count());
@@ -41,7 +41,7 @@ namespace Detector
             //*
             var discretizedStreams = _discretizeSeries(rawStreams).ToArray();
             var n = 6;
-            var level1Nodes = discretizedStreams.Select(stream => new LeafNode(stream, 8, Metrics.GroupAverage));
+            var level1Nodes = discretizedStreams.Select(stream => new LeafNode(stream, null, 8));
             var level2Nodes = Enumerable.Range(0, 6).Select(i =>
                 new InternalNode(level1Nodes.Where((v, j) => j % 6 == i).ToArray(), 8, Metrics.GroupAverage)
             );
@@ -58,7 +58,6 @@ namespace Detector
                 Console.WriteLine($"Precision: {pr.Item1,-6:f4}, Recall: {pr.Item2,-6:f4}, FMeasure: {f}");
             }
             //*/
-
             (double, double) CalcPr(IEnumerable<IEnumerable<int>> streams)
             {
                 var stream = streams.Aggregate(new List<int>(), (list, enumerable) =>

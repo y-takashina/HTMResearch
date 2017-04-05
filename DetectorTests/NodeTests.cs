@@ -17,19 +17,22 @@ namespace Detector.Tests
 
         public NodeTests()
         {
-            _node = new LeafNode(new[] {3, 4, 5, 4, 3, 4, 5, 8, 0, 0}, 2);
+            _node = new LeafNode(new[] {3, 4, 5, 4, 3, 4, 5, 8, 0, 0}, null, 2);
             _node.Learn();
+            //                   0  0  0  0  0  0  0  0  0  0  1  1  1  0
+            var stream1 = new[] {0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 2, 2, 2, 0};
+            //                   0  0  0  0  1  1  1  1  1  1  0  0  0  0
+            var stream2 = new[] {0, 1, 0, 1, 2, 3, 2, 3, 2, 3, 0, 1, 0, 0};
+            //                   0  0  0  0  0  1  0  1  0  1  1  1  1  0
+            var stream3 = new[] {0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0};
+            //                   000, 010, 011, 101
+            //                   0  0  0  0  1  2  1  2  1  2  3  3  3  0
             _tree = new InternalNode(new[]
             {
-                //                  0  0  0  0  0  0  0  0  0  0  1  1  1  0
-                new LeafNode(new[] {0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 2, 2, 2, 0}, 2),
-                //                  0  0  0  0  1  1  1  1  1  1  0  0  0  0
-                new LeafNode(new[] {0, 1, 0, 1, 2, 3, 2, 3, 2, 3, 0, 1, 0, 0}, 2),
-                //                  0  0  0  0  0  1  0  1  0  1  1  1  1  0
-                new LeafNode(new[] {0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0}, 2),
+                new LeafNode(stream1, stream1, 2),
+                new LeafNode(stream2, stream2, 2),
+                new LeafNode(stream3, stream3, 2),
             }, 2);
-            //                      000, 010, 011, 101
-            //                      0  0  0  0  1  2  1  2  1  2  3  3  3  0
             _tree.Learn();
         }
 
@@ -116,7 +119,20 @@ namespace Detector.Tests
         [TestMethod()]
         public void PredictTest()
         {
-            Assert.Fail();
+            Console.WriteLine(_tree.Predict());
+            Console.WriteLine(_tree.Predict());
+            Console.WriteLine(_tree.Predict());
+            Console.WriteLine(_tree.Predict());
+            Console.WriteLine(_tree.Predict());
+            Console.WriteLine(_tree.Predict());
+            Console.WriteLine(_tree.Predict());
+            Console.WriteLine(_tree.Predict());
+            Console.WriteLine(_tree.Predict());
+            Console.WriteLine(_tree.Predict());
+            Console.WriteLine(_tree.Predict());
+            Console.WriteLine(_tree.Predict());
+            Console.WriteLine(_tree.Predict());
+            Console.WriteLine(_tree.Predict());
         }
     }
 }
