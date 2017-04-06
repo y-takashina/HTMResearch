@@ -16,9 +16,12 @@ namespace Detector
 {
     public class LeafNode : Node
     {
-        public LeafNode(IEnumerable<int> trainStream, int numberTemporalGroup, Func<(double, int), (double, int), double> metrics = null) : base(numberTemporalGroup, metrics)
+        public IEnumerable<int> TestStream { get; private set; }
+
+        public LeafNode(IEnumerable<int> trainStream, IEnumerable<int> testStream, int numberTemporalGroup, Func<(double, int), (double, int), double> metrics = null) : base(numberTemporalGroup, metrics)
         {
             Memoize(trainStream.Select(v => new[] {v}));
+            TestStream = testStream;
         }
 
         public override double[] Predict(int[] input) => Forward(Quantize(input).Cast<double>().ToArray());
@@ -37,13 +40,13 @@ namespace Detector
 
         private IEnumerable<int[]> _aggregateChildStreams()
         {
-            var childStreams = _childNodes.Select(node => node.Stream.Select(i => node.Forward(OneHot(node.N, i))).ToArray()).ToArray();
+            var childStreams = _childNodes.Select(node => node.Stream.Select(node.Forward).ToArray()).ToArray();
             var rawStream = childStreams.First().Select(_ => new List<int>()).ToList();
             foreach (var childStream in childStreams)
             {
                 for (var j = 0; j < childStream.Length; j++)
                 {
-                    rawStream[j].AddRange(childStream[j]);
+                    rawStream[j].Add(childStream[j]);
                 }
             }
             return rawStream.Select(value => value.ToArray());
@@ -72,7 +75,12 @@ namespace Detector
         public int M => NumberTemporalGroup;
 
         public int N => SpatialPooler?.Count ?? 0;
+
+        /// <summary>
+        /// SpatialPooler における index が格納されている。
+        /// </summary>
         public IEnumerable<int> Stream { get; set; }
+
         public List<int[]> SpatialPooler { get; set; }
         public int[,] Membership { get; set; }
         private readonly Func<(double, int), (double, int), double> _metrics;
@@ -94,10 +102,10 @@ namespace Detector
         /// 1-of-k なクラスタ割り当てを上に出力する。
         /// 主に学習時に使う。
         /// </summary>
-        public int[] Forward(int[] input)
+        public int Forward(int input)
         {
-            if (input.Length != N) throw new IndexOutOfRangeException("Feedforward input to a node must have the same length as the node's spatial pooler.");
-            return Membership.T().Mul(input);
+            for (var i = 0; i < M; i++) if (Membership[input, i] == 1) return i;
+            throw new ArgumentOutOfRangeException();
         }
 
         /// <summary>

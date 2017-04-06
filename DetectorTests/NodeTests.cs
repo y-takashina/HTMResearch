@@ -36,22 +36,12 @@ namespace Detector.Tests
         [TestMethod()]
         public void ForwardHardTest()
         {
-            var inputs = new[]
-            {
-                new[] {1, 0, 0, 0, 0},
-                new[] {0, 1, 0, 0, 0},
-                new[] {0, 0, 1, 0, 0},
-                new[] {0, 0, 0, 1, 0},
-                new[] {0, 0, 0, 0, 1},
-            };
-            var answers = new[,] {{0, 1}, {0, 1}, {0, 1}, {1, 0}, {1, 0}};
+            var inputs = new[] {0, 1, 2, 3, 4};
+            var answers = new[] {1, 1, 1, 0, 0};
             for (var i = 0; i < 5; i++)
             {
                 var output = _node.Forward(inputs[i]);
-                for (var j = 0; j < 2; j++)
-                {
-                    Assert.AreEqual(answers[i, j], output[j]);
-                }
+                Assert.AreEqual(answers[i], output);
             }
         }
 
