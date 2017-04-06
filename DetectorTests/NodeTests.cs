@@ -68,7 +68,16 @@ namespace Detector.Tests
         [TestMethod()]
         public void BackwardHardTest()
         {
-            Assert.Fail();
+            var inputs = new[] {0, 1};
+            var answers = new[,] {{0, 0, 0, 1, 1}, {1, 1, 1, 0, 0}};
+            for (var i = 0; i < 2; i++)
+            {
+                var output = _node.Backward(inputs[i]);
+                for (var j = 0; j < 5; j++)
+                {
+                    Assert.AreEqual(answers[i, j], output[j]);
+                }
+            }
         }
 
         [TestMethod()]

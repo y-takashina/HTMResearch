@@ -120,10 +120,11 @@ namespace Detector
             return temporalGroup;
         }
 
-        public int[] Backward(int[] input)
+        public int[] Backward(int input)
         {
-            if (input.Length != M) throw new IndexOutOfRangeException("Feedback input to a node must have the same length as the node's temporal pooler.");
-            throw new NotImplementedException();
+            var array = new int[N];
+            for (var i = 0; i < N; i++) array[i] = Membership[i, input];
+            return array;
         }
 
         public double[] Backward(double[] input)
@@ -149,7 +150,6 @@ namespace Detector
             var stream = Stream.ToArray();
             for (var i = 0; i < stream.Length - 1; i++)
             {
-                //if (double.IsNaN(stream[i]) || double.IsNaN(stream[i + 1])) continue;
                 transitions[stream[i], stream[i + 1]]++;
             }
             var probabilities = transitions.NormalizeToRaw();
