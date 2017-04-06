@@ -10,27 +10,37 @@ using MoreLinq;
 using Clustering;
 using PipExtensions;
 using static Clustering.Clustering;
-using static PipExtensions.MatrixExtensions;
 
 namespace Detector
 {
     public class LeafNode : Node
     {
-        public IEnumerable<int> TestStream { get; private set; }
+        public IEnumerable<double> TestStream { get; private set; }
 
-        public LeafNode(IEnumerable<int> trainStream, IEnumerable<int> testStream, int numberTemporalGroup, Func<(double, int), (double, int), double> metrics = null) : base(numberTemporalGroup, metrics)
+        public LeafNode(IEnumerable<double> trainStream, IEnumerable<double> testStream, int numberTemporalGroup, Func<(double, int), (double, int), double> metrics = null) : base(numberTemporalGroup, metrics)
         {
-            Memoize(trainStream.Select(v => new[] {v}));
+            if (trainStream.Any(double.IsNaN)) throw new ArgumentException("trainStream must not have NaN value.");
+            var means = Sampling.KMeansSampling(trainStream.ToArray(), 16).ToList();
+            means.Print();
+            var discretizedStream = trainStream.Select(v => means.MinBy(m => Math.Abs(m - v))).Select(nearest => means.IndexOf(nearest));
+            Memorize(discretizedStream.Select(v => new[] {v}));
             TestStream = testStream;
         }
 
         public override double[] Predict()
         {
             if (!TestStream.Any()) throw new NullReferenceException("Cannot predict anything. TestStream is empty.");
-            var input = SpatialPooler.IndexOf<int[]>(new[] {TestStream.First()});
+            var rawInput = TestStream.First();
             TestStream = TestStream.Skip(1);
+//            var input = SpatialPooler.IndexOf<int[]>(SpatialPooler.MinBy(m => Math.Abs(m.First() - rawInput)));
+//            coincidence[input] = 1.0;
             var coincidence = new double[N];
-            coincidence[input] = 1.0;
+            for (var i = 0; i < N; i++)
+            {
+                var d = Math.Abs(SpatialPooler[i].First() - rawInput);
+                coincidence[i] = Math.Exp(-d * d);
+            }
+            coincidence = coincidence.Normalize();
             return Forward(coincidence);
         }
     }
@@ -63,7 +73,7 @@ namespace Detector
         public override void Learn()
         {
             foreach (var childNode in _childNodes) childNode.Learn();
-            Memoize(_aggregateChildStreams());
+            Memorize(_aggregateChildStreams());
             base.Learn();
         }
 
@@ -146,13 +156,13 @@ namespace Detector
             throw new NotImplementedException();
         }
 
-        public void Memoize(IEnumerable<int[]> rawStream)
+        public void Memorize(IEnumerable<int[]> rawStream)
         {
             SpatialPooler = new List<int[]>();
             foreach (var value in rawStream)
             {
-                var memoized = SpatialPooler.Any(memoizedValue => memoizedValue.SequenceEqual(value));
-                if (!memoized) SpatialPooler.Add(value);
+                var memorized = SpatialPooler.Any(memoizedValue => memoizedValue.SequenceEqual(value));
+                if (!memorized) SpatialPooler.Add(value);
             }
             Stream = rawStream.Select(value => SpatialPooler.IndexOf<int[]>(value));
         }
