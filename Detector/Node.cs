@@ -122,9 +122,9 @@ namespace Detector
 
         public int[] Backward(int input)
         {
-            var array = new int[N];
-            for (var i = 0; i < N; i++) array[i] = Membership[i, input];
-            return array;
+            var coincidence = new int[N];
+            for (var i = 0; i < N; i++) coincidence[i] = Membership[i, input];
+            return coincidence;
         }
 
         public double[] Backward(double[] input)
