@@ -15,20 +15,20 @@ namespace Detector.Tests
         [TestMethod()]
         public void DetectorForWTP2Test()
         {
-            var rawSeries = new List<List<double>>();
+            var rawStreams = new List<List<double>>();
             using (var sr = new StreamReader(@"..\data\water-treatment.csv"))
             {
                 while (!sr.EndOfStream)
                 {
                     var line = sr.ReadLine().Split(',').Skip(1).ToArray();
-                    if (!rawSeries.Any()) rawSeries.AddRange(line.Select(_ => new List<double>()));
+                    if (!rawStreams.Any()) rawStreams.AddRange(line.Select(_ => new List<double>()));
                     for (var i = 0; i < line.Length; i++)
                     {
-                        rawSeries[i].Add(double.TryParse(line[i], out double value) ? value : double.NaN);
+                        rawStreams[i].Add(double.Parse(line[i]));
                     }
                 }
             }
-            var detector = new DetectorForWTP2(rawSeries);
+            var detector = new DetectorForWTP2(rawStreams);
         }
     }
 }

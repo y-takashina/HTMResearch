@@ -14,19 +14,20 @@ namespace Detector
     {
         public DetectorForWTP2(List<List<double>> rawStreams)
         {
-            /*
-            var n = 6;
+            //*
+            var n = 4;
             var discretizedStreams = _discretizeSeries(rawStreams).ToArray();
             var relationships = MutualInformationMatrix(discretizedStreams);
             var rootCluster = Clustering.Clustering.AggregativeHierarchicalClustering(Enumerable.Range(0, discretizedStreams.Length), (i, j) => relationships[i, j], Metrics.GroupAverage);
-            var leafNodes = discretizedStreams.Select(stream => new LeafNode(stream, 4)).ToArray();
+            var leafNodes = rawStreams.Select(stream => new LeafNode(stream, null, 4)).ToArray();
             var root = new InternalNode(new[] {AggregateClusters((rootCluster, null)).node}, 1);
             root.Learn();
             var streamsByCluster = Enumerable.Range(0, n).Select(k => root.Stream.Select((c, i) => (c, i)).Where(t => t.Item1 == k).Select(t => t.Item2)).OrderByDescending(s => s.Count());
             for (var i = 0; i < n + 1; i++)
             {
                 var pr = CalcPr(streamsByCluster.Skip(i));
-                Console.WriteLine($"Precision: {pr.Item1,-6:f4}, Recall: {pr.Item2,-6:f4}");
+                var f = 2 * pr.Item1 * pr.Item2 / (pr.Item1 + pr.Item2);
+                Console.WriteLine($"Precision: {pr.Item1,-6:f4}, Recall: {pr.Item2,-6:f4}, FMeasure: {f}");
             }
 
             (Cluster<int> cluster, Node node) AggregateClusters((Cluster<int> cluster, Node node) acc)
@@ -38,10 +39,10 @@ namespace Detector
                 return (null, new InternalNode(new[] {left, right}, n, Metrics.GroupAverage));
             }
             //*/
-            //*
+            /*
             var discretizedStreams = _discretizeSeries(rawStreams).ToArray();
             var n = 6;
-            var level1Nodes = discretizedStreams.Select(stream => new LeafNode(stream, null, 8, Metrics.GroupAverage));
+            var level1Nodes = rawStreams.Select(stream => new LeafNode(stream, null, 8, Metrics.GroupAverage));
             var level2Nodes = Enumerable.Range(0, 6).Select(i =>
                 new InternalNode(level1Nodes.Where((v, j) => j % 6 == i).ToArray(), 8, Metrics.GroupAverage)
             );

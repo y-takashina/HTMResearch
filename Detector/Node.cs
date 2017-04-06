@@ -10,27 +10,37 @@ using MoreLinq;
 using Clustering;
 using PipExtensions;
 using static Clustering.Clustering;
-using static PipExtensions.MatrixExtensions;
 
 namespace Detector
 {
     public class LeafNode : Node
     {
-        public IEnumerable<int> TestStream { get; private set; }
+        public IEnumerable<double> TestStream { get; private set; }
 
-        public LeafNode(IEnumerable<int> trainStream, IEnumerable<int> testStream, int numberTemporalGroup, Func<(double, int), (double, int), double> metrics = null) : base(numberTemporalGroup, metrics)
+        public LeafNode(IEnumerable<double> trainStream, IEnumerable<double> testStream, int numberTemporalGroup, Func<(double, int), (double, int), double> metrics = null) : base(numberTemporalGroup, metrics)
         {
-            Memorize(trainStream.Select(v => new[] {v}));
+            if (trainStream.Any(double.IsNaN)) throw new ArgumentException("trainStream must not have NaN value.");
+            var means = Sampling.KMeansSampling(trainStream.ToArray(), 16).ToList();
+            means.Print();
+            var discretizedStream = trainStream.Select(v => means.MinBy(m => Math.Abs(m - v))).Select(nearest => means.IndexOf(nearest));
+            Memorize(discretizedStream.Select(v => new[] {v}));
             TestStream = testStream;
         }
 
         public override double[] Predict()
         {
             if (!TestStream.Any()) throw new NullReferenceException("Cannot predict anything. TestStream is empty.");
-            var input = SpatialPooler.IndexOf<int[]>(new[] {TestStream.First()});
+            var rawInput = TestStream.First();
             TestStream = TestStream.Skip(1);
+//            var input = SpatialPooler.IndexOf<int[]>(SpatialPooler.MinBy(m => Math.Abs(m.First() - rawInput)));
+//            coincidence[input] = 1.0;
             var coincidence = new double[N];
-            coincidence[input] = 1.0;
+            for (var i = 0; i < N; i++)
+            {
+                var d = Math.Abs(SpatialPooler[i].First() - rawInput);
+                coincidence[i] = Math.Exp(-d * d);
+            }
+            coincidence = coincidence.Normalize();
             return Forward(coincidence);
         }
     }
