@@ -12,22 +12,20 @@ namespace Detector
 {
     public class DetectorForWTP2
     {
-        public DetectorForWTP2(List<List<double>> rawSeries)
+        public DetectorForWTP2(List<List<double>> rawStreams)
         {
-            var streams = _discretizeSeries(rawSeries).ToArray();
-
-//*
-            var relationships = MutualInformationMatrix(streams);
-//            MatViz.MatViz.SaveMatrixImage(relationships, "relationships");
-            var rootCluster = Clustering.Clustering.AggregativeHierarchicalClustering(Enumerable.Range(0, streams.Length), (i, j) => relationships[i, j], Metrics.GroupAverage);
-            var leafNodes = streams.Select(s => new LeafNode(s, 4)).ToArray();
+            /*
             var n = 6;
+            var discretizedStreams = _discretizeSeries(rawStreams).ToArray();
+            var relationships = MutualInformationMatrix(discretizedStreams);
+            var rootCluster = Clustering.Clustering.AggregativeHierarchicalClustering(Enumerable.Range(0, discretizedStreams.Length), (i, j) => relationships[i, j], Metrics.GroupAverage);
+            var leafNodes = discretizedStreams.Select(stream => new LeafNode(stream, 4)).ToArray();
             var root = new InternalNode(new[] {AggregateClusters((rootCluster, null)).node}, 1);
             root.Learn();
             var streamsByCluster = Enumerable.Range(0, n).Select(k => root.Stream.Select((c, i) => (c, i)).Where(t => t.Item1 == k).Select(t => t.Item2)).OrderByDescending(s => s.Count());
             for (var i = 0; i < n + 1; i++)
             {
-                var pr = _calcPR(streamsByCluster.Skip(i));
+                var pr = CalcPr(streamsByCluster.Skip(i));
                 Console.WriteLine($"Precision: {pr.Item1,-6:f4}, Recall: {pr.Item2,-6:f4}");
             }
 
@@ -39,86 +37,39 @@ namespace Detector
                 var right = AggregateClusters((couple.Right, null)).node;
                 return (null, new InternalNode(new[] {left, right}, n, Metrics.GroupAverage));
             }
-
-//*/
-
-/*
-            var level1Nodes = streams.Select(s => new LeafNode(s, 4)).ToArray();
-            var level2Nodes2 = Enumerable.Range(0, 19).Select(i =>
-                new InternalNode(level1Nodes.Where((v, j) => j % 19 == i).ToArray(), 4, Metrics.GroupAverage)
-            );
-            var level3Nodes2 = Enumerable.Range(0, 9).Select(i =>
-                new InternalNode(level2Nodes2.Where((v, j) => j % 10 == i).ToArray(), 4, Metrics.GroupAverage)
-            );
-            var level4Nodes2 = Enumerable.Range(0, 4).Select(i =>
-                new InternalNode(level3Nodes2.Where((v, j) => j % 5 == i).ToArray(), 8, Metrics.GroupAverage)
-            );
-            var level5Nodes2 = Enumerable.Range(0, 2).Select(i =>
-                new InternalNode(level4Nodes2.Where((v, j) => j % 2 == i).ToArray(), 8, Metrics.GroupAverage)
-            );
-            var level6Node2 = new InternalNode(level5Nodes2.ToArray(), 8, Metrics.Shortest);
-            var level7Node2 = new InternalNode(new[] {level6Node2}, 1);
-            level7Node2.Learn();
-            foreach (var value in level7Node2.Stream) Console.WriteLine(value);
-//*/
-/*
-            for (var a = 4; a <= 32; a *= 2)
-            {
-                for (var b = 4; b < a * a; b += a)
-                {
-                    var level1Nodes = streams.Select(stream => new LeafNode(stream, a, Metrics.GroupAverage));
-                    var level2Nodes = Enumerable.Range(0, 6).Select(i =>
-                        new InternalNode(level1Nodes.Where((v, j) => j % 6 == i).ToArray(), a, Metrics.GroupAverage)
-                    );
-                    var level3Node = new InternalNode(level2Nodes.ToArray(), b, Metrics.Shortest);
-                    var level4Node = new InternalNode(new[] {level3Node}, 1, Metrics.Shortest);
-                    try
-                    {
-                        level4Node.Learn();
-                    }
-                    catch (Exception e)
-                    {
-                        continue;
-                    }
-                    var streamsForEachCluster = Enumerable.Range(0, b).Select(k => level4Node.Stream.Select((cluster, i) => (cluster, i)).Where(t => t.Item1 == k).Select(t => t.Item2));
-                    streamsForEachCluster = streamsForEachCluster.OrderByDescending(stream => stream.Count());
-                    var fMeasure = Enumerable.Range(0, b).Select(i => _calcPR(streamsForEachCluster.Skip(i))).Max(t => 2 * t.Item1 * t.Item2 / (t.Item1 + t.Item2));
-                    Console.WriteLine($"max f: {fMeasure}, params: {a},{b}");
-                }
-            }
-//*/
-/*
-            var nFinalCluster = 6;
-            var level1Nodes = streams.Select(stream => new LeafNode(stream, 8, Metrics.GroupAverage));
+            //*/
+            //*
+            var discretizedStreams = _discretizeSeries(rawStreams).ToArray();
+            var n = 6;
+            var level1Nodes = discretizedStreams.Select(stream => new LeafNode(stream, 8, Metrics.GroupAverage));
             var level2Nodes = Enumerable.Range(0, 6).Select(i =>
                 new InternalNode(level1Nodes.Where((v, j) => j % 6 == i).ToArray(), 8, Metrics.GroupAverage)
             );
-            var level3Node = new InternalNode(level2Nodes.ToArray(), nFinalCluster, Metrics.Shortest);
-            var level4Node = new InternalNode(new[] {level3Node}, 1, Metrics.Shortest);
-            level4Node.Learn();
-            foreach (var value in level4Node.Stream) Console.WriteLine(value);
-            var streamsForEachCluster = Enumerable.Range(0, nFinalCluster).Select(k => level4Node.Stream.Select((cluster, i) => (cluster, i)).Where(t => t.Item1 == k).Select(t => t.Item2));
-            streamsForEachCluster = streamsForEachCluster.OrderByDescending(stream => stream.Count());
-            for (var i = 0; i < nFinalCluster + 1; i++)
+            var level3Node = new InternalNode(level2Nodes.ToArray(), n, Metrics.Shortest);
+            var root = new InternalNode(new[] {level3Node}, 1, Metrics.Shortest);
+            root.Learn();
+            foreach (var value in root.Stream) Console.WriteLine(value);
+            var streamsByCluster = Enumerable.Range(0, n).Select(k => root.Stream.Select((c, i) => (c, i)).Where(t => t.Item1 == k).Select(t => t.Item2));
+            streamsByCluster = streamsByCluster.OrderByDescending(stream => stream.Count());
+            for (var i = 0; i < n + 1; i++)
             {
-                var pr = _calcPR(streamsForEachCluster.Skip(i));
-                Console.WriteLine($"Precision: {pr.Item1,-6:f4}, Recall: {pr.Item2,-6:f4}");
+                var pr = CalcPr(streamsByCluster.Skip(i));
+                var f = 2 * pr.Item1 * pr.Item2 / (pr.Item1 + pr.Item2);
+                Console.WriteLine($"Precision: {pr.Item1,-6:f4}, Recall: {pr.Item2,-6:f4}, FMeasure: {f}");
             }
-            var fMeasure = Enumerable.Range(0, nFinalCluster).Select(i => _calcPR(streamsForEachCluster.Skip(i))).Max(t => 2 * t.Item1 * t.Item2 / (t.Item1 + t.Item2));
-            Console.WriteLine($"max f: {fMeasure}, params: {8},{16}");
-//*/
-        }
+            //*/
 
-        private static (double, double) _calcPR(IEnumerable<IEnumerable<int>> streams)
-        {
-            var stream = streams.Aggregate(new List<int>(), (list, enumerable) =>
+            (double, double) CalcPr(IEnumerable<IEnumerable<int>> streams)
             {
-                list.AddRange(enumerable);
-                return list;
-            });
-            var anomalies = new[] {10, 11, 12, 78, 148, 186, 209, 292, 395, 398, 401, 441, 442, 443};
-            var nTp = stream.Intersect(anomalies).Count();
-            return ((double) nTp / stream.Count, (double) nTp / anomalies.Length);
+                var stream = streams.Aggregate(new List<int>(), (list, enumerable) =>
+                {
+                    list.AddRange(enumerable);
+                    return list;
+                });
+                var anomalies = new[] {10, 11, 12, 78, 148, 186, 209, 292, 395, 398, 401, 441, 442, 443};
+                var nTp = stream.Intersect(anomalies).Count();
+                return ((double) nTp / stream.Count, (double) nTp / anomalies.Length);
+            }
         }
 
         private static List<List<int>> _discretizeSeries(List<List<double>> rawSeries)
