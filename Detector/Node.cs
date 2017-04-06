@@ -20,7 +20,7 @@ namespace Detector
 
         public LeafNode(IEnumerable<int> trainStream, IEnumerable<int> testStream, int numberTemporalGroup, Func<(double, int), (double, int), double> metrics = null) : base(numberTemporalGroup, metrics)
         {
-            Memoize(trainStream.Select(v => new[] {v}));
+            Memorize(trainStream.Select(v => new[] {v}));
             TestStream = testStream;
         }
 
@@ -63,7 +63,7 @@ namespace Detector
         public override void Learn()
         {
             foreach (var childNode in _childNodes) childNode.Learn();
-            Memoize(_aggregateChildStreams());
+            Memorize(_aggregateChildStreams());
             base.Learn();
         }
 
@@ -146,13 +146,13 @@ namespace Detector
             throw new NotImplementedException();
         }
 
-        public void Memoize(IEnumerable<int[]> rawStream)
+        public void Memorize(IEnumerable<int[]> rawStream)
         {
             SpatialPooler = new List<int[]>();
             foreach (var value in rawStream)
             {
-                var memoized = SpatialPooler.Any(memoizedValue => memoizedValue.SequenceEqual(value));
-                if (!memoized) SpatialPooler.Add(value);
+                var memorized = SpatialPooler.Any(memoizedValue => memoizedValue.SequenceEqual(value));
+                if (!memorized) SpatialPooler.Add(value);
             }
             Stream = rawStream.Select(value => SpatialPooler.IndexOf<int[]>(value));
         }
