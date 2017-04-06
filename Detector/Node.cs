@@ -24,7 +24,15 @@ namespace Detector
             TestStream = testStream;
         }
 
-        public override double[] Predict(int[] input) => Forward(Quantize(input).Cast<double>().ToArray());
+        public override double[] Predict()
+        {
+            if (!TestStream.Any()) throw new NullReferenceException("Cannot predict anything. TestStream is empty.");
+            var input = SpatialPooler.IndexOf<int[]>(new[] {TestStream.First()});
+            TestStream = TestStream.Skip(1);
+            var coincidence = new double[N];
+            coincidence[input] = 1.0;
+            return Forward(coincidence);
+        }
     }
 
     public class InternalNode : Node
@@ -44,12 +52,12 @@ namespace Detector
             var rawStream = childStreams.First().Select(_ => new List<int>()).ToList();
             foreach (var childStream in childStreams)
             {
-                for (var j = 0; j < childStream.Length; j++)
+                for (var i = 0; i < childStream.Length; i++)
                 {
-                    rawStream[j].Add(childStream[j]);
+                    rawStream[i].Add(childStream[i]);
                 }
             }
-            return rawStream.Select(value => value.ToArray());
+            return rawStream.Select(coincidence => coincidence.ToArray());
         }
 
         public override void Learn()
@@ -59,9 +67,18 @@ namespace Detector
             base.Learn();
         }
 
-        public override double[] Predict(int[] input)
+        public override double[] Predict()
         {
-            throw new NotImplementedException();
+            var childOutputs = _childNodes.Select(node => node.Predict()).ToArray();
+            var coincidence = Enumerable.Repeat(1.0, N).ToArray();
+            for (var i = 0; i < N; i++)
+            {
+                for (var j = 0; j < SpatialPooler[i].Length; j++)
+                {
+                    coincidence[i] *= childOutputs[j][SpatialPooler[i][j]];
+                }
+            }
+            return Forward(coincidence);
         }
     }
 
@@ -81,6 +98,8 @@ namespace Detector
         /// </summary>
         public IEnumerable<int> Stream { get; set; }
 
+        public IEnumerable<int> ClusterStream => Stream.Select(Forward);
+
         public List<int[]> SpatialPooler { get; set; }
         public int[,] Membership { get; set; }
         private readonly Func<(double, int), (double, int), double> _metrics;
@@ -89,12 +108,6 @@ namespace Detector
         {
             _metrics = metrics ?? Metrics.GroupAverage;
             NumberTemporalGroup = numberTemporalGroup;
-        }
-
-        public int[] Quantize(int[] rawInput)
-        {
-            if (!SpatialPooler.Any(v => v.SequenceEqual(rawInput))) throw new ArgumentOutOfRangeException("input must have been memoized in SpatialPooer");
-            return OneHot(N, SpatialPooler.IndexOf<int[]>(rawInput));
         }
 
         /// <summary>
@@ -120,10 +133,11 @@ namespace Detector
             return temporalGroup;
         }
 
-        public int[] Backward(int[] input)
+        public int[] Backward(int input)
         {
-            if (input.Length != M) throw new IndexOutOfRangeException("Feedback input to a node must have the same length as the node's temporal pooler.");
-            throw new NotImplementedException();
+            var coincidence = new int[N];
+            for (var i = 0; i < N; i++) coincidence[i] = Membership[i, input];
+            return coincidence;
         }
 
         public double[] Backward(double[] input)
@@ -149,7 +163,6 @@ namespace Detector
             var stream = Stream.ToArray();
             for (var i = 0; i < stream.Length - 1; i++)
             {
-                //if (double.IsNaN(stream[i]) || double.IsNaN(stream[i + 1])) continue;
                 transitions[stream[i], stream[i + 1]]++;
             }
             var probabilities = transitions.NormalizeToRaw();
@@ -166,6 +179,6 @@ namespace Detector
             }
         }
 
-        public abstract double[] Predict(int[] input);
+        public abstract double[] Predict();
     }
 }

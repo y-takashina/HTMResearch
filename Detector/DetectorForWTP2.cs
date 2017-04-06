@@ -41,7 +41,7 @@ namespace Detector
             //*
             var discretizedStreams = _discretizeSeries(rawStreams).ToArray();
             var n = 6;
-            var level1Nodes = discretizedStreams.Select(stream => new LeafNode(stream, 8, Metrics.GroupAverage));
+            var level1Nodes = discretizedStreams.Select(stream => new LeafNode(stream, null, 8, Metrics.GroupAverage));
             var level2Nodes = Enumerable.Range(0, 6).Select(i =>
                 new InternalNode(level1Nodes.Where((v, j) => j % 6 == i).ToArray(), 8, Metrics.GroupAverage)
             );
