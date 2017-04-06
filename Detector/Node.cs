@@ -24,9 +24,14 @@ namespace Detector
             TestStream = testStream;
         }
 
-        public override double[] Predict(int[] input)
+        public override double[] Predict()
         {
-            throw new NotImplementedException();
+            if (!TestStream.Any()) throw new NullReferenceException("Cannot predict anything. TestStream is empty.");
+            var input = SpatialPooler.IndexOf<int[]>(new[] {TestStream.First()});
+            TestStream = TestStream.Skip(1);
+            var coincidence = new double[N];
+            coincidence[input] = 1.0;
+            return Forward(coincidence);
         }
     }
 
@@ -47,12 +52,12 @@ namespace Detector
             var rawStream = childStreams.First().Select(_ => new List<int>()).ToList();
             foreach (var childStream in childStreams)
             {
-                for (var j = 0; j < childStream.Length; j++)
+                for (var i = 0; i < childStream.Length; i++)
                 {
-                    rawStream[j].Add(childStream[j]);
+                    rawStream[i].Add(childStream[i]);
                 }
             }
-            return rawStream.Select(value => value.ToArray());
+            return rawStream.Select(coincidence => coincidence.ToArray());
         }
 
         public override void Learn()
@@ -62,9 +67,18 @@ namespace Detector
             base.Learn();
         }
 
-        public override double[] Predict(int[] input)
+        public override double[] Predict()
         {
-            throw new NotImplementedException();
+            var childOutputs = _childNodes.Select(node => node.Predict()).ToArray();
+            var coincidence = Enumerable.Repeat(1.0, N).ToArray();
+            for (var i = 0; i < N; i++)
+            {
+                for (var j = 0; j < SpatialPooler[i].Length; j++)
+                {
+                    coincidence[i] *= childOutputs[j][SpatialPooler[i][j]];
+                }
+            }
+            return Forward(coincidence);
         }
     }
 
@@ -83,6 +97,8 @@ namespace Detector
         /// SpatialPooler における index が格納されている。
         /// </summary>
         public IEnumerable<int> Stream { get; set; }
+
+        public IEnumerable<int> ClusterStream => Stream.Select(Forward);
 
         public List<int[]> SpatialPooler { get; set; }
         public int[,] Membership { get; set; }
@@ -163,6 +179,6 @@ namespace Detector
             }
         }
 
-        public abstract double[] Predict(int[] input);
+        public abstract double[] Predict();
     }
 }

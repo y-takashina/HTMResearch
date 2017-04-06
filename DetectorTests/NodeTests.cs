@@ -118,7 +118,14 @@ namespace Detector.Tests
         [TestMethod()]
         public void PredictTest()
         {
-            Assert.Fail();
+            foreach (var value in _tree.ClusterStream)
+            {
+                var prediction = _tree.Predict();
+                for (var i = 0; i < prediction.Length; i++)
+                {
+                    Assert.AreEqual(i == value ? 1 : 0, prediction[i], 1e-300);
+                }
+            }
         }
     }
 }
