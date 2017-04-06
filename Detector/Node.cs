@@ -24,7 +24,10 @@ namespace Detector
             TestStream = testStream;
         }
 
-        public override double[] Predict(int[] input) => Forward(Quantize(input).Cast<double>().ToArray());
+        public override double[] Predict(int[] input)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public class InternalNode : Node
@@ -89,12 +92,6 @@ namespace Detector
         {
             _metrics = metrics ?? Metrics.GroupAverage;
             NumberTemporalGroup = numberTemporalGroup;
-        }
-
-        public int[] Quantize(int[] rawInput)
-        {
-            if (!SpatialPooler.Any(v => v.SequenceEqual(rawInput))) throw new ArgumentOutOfRangeException("input must have been memoized in SpatialPooer");
-            return OneHot(N, SpatialPooler.IndexOf<int[]>(rawInput));
         }
 
         /// <summary>
