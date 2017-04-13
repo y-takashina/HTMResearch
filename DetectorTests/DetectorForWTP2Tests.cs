@@ -24,7 +24,7 @@ namespace Detector.Tests
                     if (!rawStreams.Any()) rawStreams.AddRange(line.Select(_ => new List<double>()));
                     for (var i = 0; i < line.Length; i++)
                     {
-                        rawStreams[i].Add(double.Parse(line[i]));
+                        rawStreams[i].Add(line[i] == "?" ? double.NaN : double.Parse(line[i]));
                     }
                 }
             }
