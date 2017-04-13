@@ -15,32 +15,43 @@ namespace Detector
 {
     public class LeafNode : Node
     {
+        public List<double> Means { get; private set; }
+        public override int N => Means?.Count ?? 0;
+        public double Deviation { get; }
         public IEnumerable<double> TestStream { get; private set; }
+        public override bool CanPredict => TestStream?.Any() ?? false;
 
         public LeafNode(IEnumerable<double> trainStream, IEnumerable<double> testStream, int numberTemporalGroup, Func<(double, int), (double, int), double> metrics = null) : base(numberTemporalGroup, metrics)
         {
-            if (trainStream.Any(double.IsNaN)) throw new ArgumentException("trainStream must not have NaN value.");
-            var means = Sampling.KMeansSampling(trainStream.ToArray(), 16).ToList();
-            means.Print();
-            var discretizedStream = trainStream.Select(v => means.MinBy(m => Math.Abs(m - v))).Select(nearest => means.IndexOf(nearest));
-            Memorize(discretizedStream.Select(v => new[] {v}));
+            Memorize(trainStream);
+            Deviation = trainStream.Where(v => !double.IsNaN(v)).Deviation();
             TestStream = testStream;
+        }
+
+        public void Memorize(IEnumerable<double> rawStream)
+        {
+            Means = Sampling.KMeansSampling(rawStream.Where(v => !double.IsNaN(v)).ToArray(), 16).ToList();
+            Stream = rawStream.Select(v => double.IsNaN(v) ? new Random().Next(N) : Means.IndexOf(Means.MinBy(m => Math.Abs(m - v))));
         }
 
         public override double[] Predict()
         {
-            if (!TestStream.Any()) throw new NullReferenceException("Cannot predict anything. TestStream is empty.");
-            var rawInput = TestStream.First();
+            if (!CanPredict) throw new NullReferenceException("Cannot predict anything. TestStream is null or empty.");
+            var value = TestStream.First();
             TestStream = TestStream.Skip(1);
-//            var input = SpatialPooler.IndexOf<int[]>(SpatialPooler.MinBy(m => Math.Abs(m.First() - rawInput)));
-//            coincidence[input] = 1.0;
-            var coincidence = new double[N];
-            for (var i = 0; i < N; i++)
+            var coincidence = new double[Means.Count];
+            if (double.IsNaN(value))
             {
-                var d = Math.Abs(SpatialPooler[i].First() - rawInput);
-                coincidence[i] = Math.Exp(-d * d);
+                coincidence = Enumerable.Repeat(1.0 / Means.Count, Means.Count).ToArray();
             }
-            coincidence = coincidence.Normalize();
+            else
+            {
+                for (var i = 0; i < Means.Count; i++)
+                {
+                    var d = Means[i] - value;
+                    coincidence[i] = Math.Exp(-d * d / Deviation);
+                }
+            }
             return Forward(coincidence);
         }
     }
@@ -48,6 +59,9 @@ namespace Detector
     public class InternalNode : Node
     {
         private readonly IEnumerable<Node> _childNodes;
+        public List<int[]> SpatialPooler { get; set; }
+        public override int N => SpatialPooler?.Count ?? 0;
+        public override bool CanPredict => _childNodes.Aggregate(true, (can, child) => can && child.CanPredict);
 
         public InternalNode(IEnumerable<Node> childNodes, int numberTemporalGroup, Func<(double, int), (double, int), double> metrics = null) : base(numberTemporalGroup, metrics)
         {
@@ -68,6 +82,17 @@ namespace Detector
                 }
             }
             return rawStream.Select(coincidence => coincidence.ToArray());
+        }
+
+        public void Memorize(IEnumerable<int[]> rawStream)
+        {
+            SpatialPooler = new List<int[]>();
+            foreach (var value in rawStream)
+            {
+                var memorized = SpatialPooler.Any(memoizedValue => memoizedValue.SequenceEqual(value));
+                if (!memorized) SpatialPooler.Add(value);
+            }
+            Stream = rawStream.Select(value => SpatialPooler.IndexOf<int[]>(value));
         }
 
         public override void Learn()
@@ -94,30 +119,27 @@ namespace Detector
 
     public abstract class Node
     {
-        protected int NumberTemporalGroup;
-
-        /// <summary>
-        /// alias of NumberTemporalGroup
-        /// </summary>
-        public int M => NumberTemporalGroup;
-
-        public int N => SpatialPooler?.Count ?? 0;
-
-        /// <summary>
-        /// SpatialPooler における index が格納されている。
-        /// </summary>
-        public IEnumerable<int> Stream { get; set; }
-
-        public IEnumerable<int> ClusterStream => Stream.Select(Forward);
-
-        public List<int[]> SpatialPooler { get; set; }
-        public int[,] Membership { get; set; }
         private readonly Func<(double, int), (double, int), double> _metrics;
+
+        /// <summary>
+        /// number of coincidence
+        /// </summary>
+        public abstract int N { get; }
+
+        /// <summary>
+        /// number of temporal group
+        /// </summary>
+        public int M { get; set; }
+
+        public abstract bool CanPredict { get; }
+        public IEnumerable<int> Stream { get; set; }
+        public IEnumerable<int> ClusterStream => Stream.Select(Forward);
+        public int[,] Membership { get; set; }
 
         protected Node(int numberTemporalGroup, Func<(double, int), (double, int), double> metrics)
         {
             _metrics = metrics ?? Metrics.GroupAverage;
-            NumberTemporalGroup = numberTemporalGroup;
+            M = numberTemporalGroup;
         }
 
         /// <summary>
@@ -154,17 +176,6 @@ namespace Detector
         {
             if (input.Length != M) throw new IndexOutOfRangeException("Feedback input to a node must have the same length as the node's temporal pooler.");
             throw new NotImplementedException();
-        }
-
-        public void Memorize(IEnumerable<int[]> rawStream)
-        {
-            SpatialPooler = new List<int[]>();
-            foreach (var value in rawStream)
-            {
-                var memorized = SpatialPooler.Any(memoizedValue => memoizedValue.SequenceEqual(value));
-                if (!memorized) SpatialPooler.Add(value);
-            }
-            Stream = rawStream.Select(value => SpatialPooler.IndexOf<int[]>(value));
         }
 
         public virtual void Learn()
